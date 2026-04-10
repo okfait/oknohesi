@@ -17,7 +17,6 @@
             overflow: hidden; 
         }
 
-        /* Mesh Gradient Background with Animation */
         @keyframes drift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -178,12 +177,12 @@
         }
 
         .dropdown-sheet {
-            bottom: -100%;
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(100%);
+            bottom: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .dropdown-sheet.open { bottom: 0; }
+        .dropdown-sheet.open { transform: translateY(0); }
         
-        /* Hide number input spinners */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -205,9 +204,14 @@
                 <span class="text-[#e60000] drop-shadow-md">OK</span>
                 <span class="text-white/90">NOHESI</span>
             </div>
-            <button onclick="switchView('garage')" class="spring-bounce text-gray-400 hover:text-white bg-white/5 p-2 rounded-full w-10 h-10 flex items-center justify-center border border-white/5 shadow-sm">
-                <i class="fa-solid fa-warehouse"></i>
-            </button>
+            <div class="flex gap-2">
+                <button onclick="switchView('stats')" class="spring-bounce text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 p-2 rounded-full w-10 h-10 flex items-center justify-center border border-yellow-500/20 shadow-sm">
+                    <i class="fa-solid fa-trophy"></i>
+                </button>
+                <button onclick="switchView('garage')" class="spring-bounce text-gray-400 hover:text-white bg-white/5 p-2 rounded-full w-10 h-10 flex items-center justify-center border border-white/5 shadow-sm">
+                    <i class="fa-solid fa-warehouse"></i>
+                </button>
+            </div>
         </header>
 
         <div class="flex-1 overflow-y-auto overflow-x-hidden relative">
@@ -216,10 +220,11 @@
                 <h2 class="text-2xl font-bold text-white/90 mt-2 tracking-tight">Select Circuit</h2>
                 <div class="text-xs text-white/50 mb-2 italic">enter base npc cars so the system can randomize traffic surges.</div>
                 
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="new-map-input" placeholder="Map (e.g. SRP)" class="flex-1 glass-panel px-4 py-3 text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
-                    <input type="number" id="new-map-traffic" placeholder="Cars" class="w-24 glass-panel px-3 py-3 text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
-                    <button onclick="addMap()" class="spring-bounce btn-red px-5 rounded-xl font-bold text-white"><i class="fa-solid fa-plus"></i></button>
+                <!-- FIXED MOBILE LAYOUT -->
+                <div class="flex gap-2 mb-4 w-full">
+                    <input type="text" id="new-map-input" placeholder="Map (e.g. SRP)" class="flex-[3] min-w-0 glass-panel px-3 py-3 text-sm text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
+                    <input type="number" id="new-map-traffic" placeholder="Cars" class="flex-[1] min-w-0 glass-panel px-2 py-3 text-sm text-center text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
+                    <button onclick="addMap()" class="shrink-0 spring-bounce btn-red px-4 rounded-xl font-bold text-white"><i class="fa-solid fa-plus"></i></button>
                 </div>
 
                 <div id="map-list" class="flex flex-col gap-3"></div>
@@ -236,12 +241,13 @@
                         <span id="selected-brand-text" class="text-white/70 font-bold text-lg">Select Car Brand...</span>
                         <i class="fa-solid fa-caret-down text-white/30"></i>
                     </button>
-                    <div id="calibration-warning" class="text-[11px] text-center text-amber-400 font-bold bg-amber-500/10 py-2 rounded-lg border border-amber-500/20 hidden uppercase tracking-wide shadow-[0_0_15px_rgba(217,119,6,0.1)]">
+                    <input type="text" id="car-model-input" placeholder="Optional: Model & Year (e.g. M4 Comp 2023)" class="glass-panel w-full py-3 px-5 text-sm text-white focus:outline-none focus:border-[#e60000]/50 transition border border-white/5 shadow-inner">
+                    
+                    <div id="calibration-warning" class="text-[11px] text-center text-amber-400 font-bold bg-amber-500/10 py-2 rounded-lg border border-amber-500/20 hidden uppercase tracking-wide shadow-[0_0_15px_rgba(217,119,6,0.1)] mt-1">
                         <i class="fa-solid fa-bolt mr-1"></i> 3 runs needed to calibrate map
                     </div>
                 </div>
 
-                <!-- NEW TRAFFIC SURGE BOX -->
                 <div id="traffic-surge-box" class="glass-panel p-3 flex justify-between items-center border border-white/5 transition-colors">
                     <span class="text-[10px] font-bold text-white/50 uppercase tracking-widest"><i class="fa-solid fa-car-side mr-1"></i> Set CM Traffic</span>
                     <span id="traffic-target-display" class="font-black text-sm text-white">0 <span id="surge-label" class="text-gray-400 text-[10px] ml-1">(NORMAL)</span></span>
@@ -313,13 +319,42 @@
                 </button>
             </div>
 
-            <div id="view-garage" class="hidden p-4 flex flex-col gap-4">
+            <!-- VIEW: LEADERBOARD & STATS -->
+            <div id="view-stats" class="hidden p-4 flex flex-col gap-6 pb-24">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-2xl font-bold text-white/90 tracking-tight">All-Time Stats</h2>
+                    <button onclick="switchView('map-select')" class="spring-bounce btn-gray px-4 py-2 rounded-xl text-sm font-bold shadow-lg"><i class="fa-solid fa-house"></i></button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="glass-panel p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-[#e60000]/10 blur-xl rounded-full"></div>
+                        <i class="fa-solid fa-car text-xl text-white/40 mb-2"></i>
+                        <div id="stat-cars" class="text-4xl font-black text-white tracking-tighter">0</div>
+                        <div class="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Cars Tested</div>
+                    </div>
+                    <div class="glass-panel p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        <div class="absolute -left-4 -bottom-4 w-16 h-16 bg-[#e60000]/10 blur-xl rounded-full"></div>
+                        <i class="fa-solid fa-car-burst text-xl text-[#e60000]/80 mb-2"></i>
+                        <div id="stat-crashes" class="text-4xl font-black text-white tracking-tighter">0</div>
+                        <div class="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Total Crashes</div>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <h3 class="font-bold text-xs text-yellow-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy"></i> Top 5 Fastest Runs
+                    </h3>
+                    <div id="leaderboard-list" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+
+            <div id="view-garage" class="hidden p-4 flex flex-col gap-4 pb-24">
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-2xl font-bold text-white/90 tracking-tight">My Garage</h2>
                     <button onclick="switchView('map-select')" class="spring-bounce btn-gray px-4 py-2 rounded-xl text-sm font-bold shadow-lg"><i class="fa-solid fa-house"></i></button>
                 </div>
                 
-                <!-- NEW RANK SYSTEM -->
                 <div class="glass-panel p-4 flex items-center gap-5 border border-white/5">
                     <i id="rank-icon" class="fa-solid fa-car-side text-4xl text-gray-400"></i>
                     <div class="flex flex-col">
@@ -328,7 +363,7 @@
                     </div>
                 </div>
 
-                <div id="garage-list" class="flex flex-col gap-3 pb-10"></div>
+                <div id="garage-list" class="flex flex-col gap-3"></div>
             </div>
         </div>
 
@@ -338,6 +373,17 @@
                 <button onclick="closeBrandDropdown()" class="spring-bounce text-white/40 bg-white/5 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="brand-list-container" class="flex-1 overflow-y-auto px-2 pb-4 flex flex-col gap-1"></div>
+        </div>
+
+        <div id="map-action-sheet" class="dropdown-sheet fixed left-0 right-0 mx-auto max-w-md w-full h-auto glass-panel !rounded-t-3xl !rounded-b-none !border-b-0 border-white/10 z-[100] flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-8">
+            <div class="p-5 flex justify-between items-center border-b border-white/5">
+                <h3 id="map-action-name" class="font-bold text-lg text-white/90">Map Name</h3>
+                <button onclick="closeMapOptions()" class="spring-bounce text-white/40 bg-white/5 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex flex-col gap-2 p-4">
+                <button onclick="renameMap()" class="spring-bounce w-full bg-white/5 border border-white/10 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2"><i class="fa-solid fa-pen"></i> Rename Circuit</button>
+                <button onclick="deleteMap()" class="spring-bounce w-full bg-[#e60000]/20 border border-[#e60000]/30 py-4 rounded-xl font-bold text-[#e60000] flex items-center justify-center gap-2 mt-2"><i class="fa-solid fa-trash"></i> Delete Circuit & Times</button>
+            </div>
         </div>
 
         <div id="result-overlay" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6">
@@ -354,7 +400,6 @@
                     <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Time</span> <span id="res-time" class="text-white font-mono">00:00.00</span></div>
                     <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Crashes</span> <span id="res-crashes" class="text-[#e60000] bg-[#e60000]/10 px-2 rounded">0</span></div>
                     <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Map Avg</span> <span id="res-avg" class="text-white/60 font-mono">N/A</span></div>
-                    <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Traffic Bonus</span> <span id="res-bonus" class="text-purple-400 font-bold">+0.0</span></div>
                 </div>
 
                 <button id="res-save-btn" onclick="saveAndCloseResult()" class="spring-bounce btn-red w-full py-4 rounded-xl font-bold uppercase tracking-widest shadow-xl">
@@ -381,9 +426,12 @@
         };
 
         let activeMapId = null;
-        let runState = { brand: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: 1 };
+        let runState = { brand: "", model: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: 1 };
         let timerInterval, startTime;
         let isRunning = false;
+        
+        let pressTimer;
+        let isLongPress = false;
 
         const triggerHaptic = () => { if (navigator.vibrate) navigator.vibrate(50); };
 
@@ -399,6 +447,7 @@
             document.getElementById('view-map-select').classList.add('hidden');
             document.getElementById('view-rating').classList.add('hidden');
             document.getElementById('view-garage').classList.add('hidden');
+            document.getElementById('view-stats').classList.add('hidden');
             
             const target = document.getElementById(`view-${viewId}`);
             target.classList.remove('hidden');
@@ -407,6 +456,7 @@
             target.classList.add('view-enter');
 
             if(viewId === 'garage') renderGarage();
+            if(viewId === 'stats') renderStats();
         }
 
         function addMap() {
@@ -414,7 +464,7 @@
             const input = document.getElementById('new-map-input');
             const trafficInput = document.getElementById('new-map-traffic');
             const name = input.value.trim();
-            const traffic = parseInt(trafficInput.value) || 1000; // default to 1000 if empty
+            const traffic = parseInt(trafficInput.value) || 1000;
             if(!name) return;
             
             const id = Date.now().toString();
@@ -443,8 +493,14 @@
                 const traffic = map.baseTraffic || 1000;
                 
                 const div = document.createElement('div');
-                div.className = 'spring-bounce glass-panel p-5 flex justify-between items-center cursor-pointer hover:border-white/20 transition';
-                div.onclick = () => loadMapRating(id);
+                div.className = 'spring-bounce glass-panel p-5 flex justify-between items-center cursor-pointer hover:border-white/20 transition select-none';
+                
+                div.onmousedown = () => startPress(id);
+                div.onmouseup = () => cancelPress(id);
+                div.onmouseleave = () => cancelPress(null);
+                div.ontouchstart = () => startPress(id);
+                div.ontouchend = () => cancelPress(id);
+                
                 div.innerHTML = `
                     <div>
                         <div class="font-bold text-lg text-white/90">${map.name}</div>
@@ -463,12 +519,54 @@
             return formatTime(avgMs);
         }
 
+        function startPress(id) {
+            isLongPress = false;
+            pressTimer = window.setTimeout(() => {
+                isLongPress = true;
+                triggerHaptic();
+                openMapOptions(id);
+            }, 600);
+        }
+
+        function cancelPress(id) {
+            clearTimeout(pressTimer);
+            if(id && !isLongPress) {
+                loadMapRating(id);
+            }
+        }
+
+        let actionMapId = null;
+        function openMapOptions(id) {
+            actionMapId = id;
+            document.getElementById('map-action-name').innerText = db.maps[id].name;
+            document.getElementById('map-action-sheet').classList.add('open');
+        }
+        function closeMapOptions() { document.getElementById('map-action-sheet').classList.remove('open'); }
+        
+        function deleteMap() {
+            if(confirm("delete this map and ALL saved times on it?")) {
+                delete db.maps[actionMapId];
+                saveData();
+                renderMapList();
+                closeMapOptions();
+            }
+        }
+
+        function renameMap() {
+            const newName = prompt("Enter new map name:", db.maps[actionMapId].name);
+            if(newName && newName.trim() !== "") {
+                db.maps[actionMapId].name = newName.trim();
+                saveData();
+                renderMapList();
+                closeMapOptions();
+            }
+        }
+
         function loadMapRating(id) {
             activeMapId = id;
             const map = db.maps[id];
             document.getElementById('current-map-label').innerText = map.name;
             
-            // Random Traffic Surge Logic
             const baseTraffic = map.baseTraffic || 1000;
             const roll = Math.random();
             let mult = 1;
@@ -485,13 +583,14 @@
             else if (roll > 0.60) { mult = 1.5; surgeText = "+50% HEAVY"; surgeColor = "text-amber-500"; boxBorder = "border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]"; }
             else if (roll > 0.40) { mult = 1.2; surgeText = "+20% DENSER"; surgeColor = "text-emerald-500"; boxBorder = "border-emerald-500/50"; }
             
-            runState = { brand: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: mult };
+            runState = { brand: "", model: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: mult };
             
             const trafficBox = document.getElementById('traffic-surge-box');
             trafficBox.className = `glass-panel p-3 flex justify-between items-center transition-colors border ${boxBorder}`;
             document.getElementById('traffic-target-display').innerHTML = `${Math.floor(baseTraffic * mult)} Cars <span class="${surgeColor} text-[10px] ml-1 font-bold tracking-widest">(${surgeText})</span>`;
 
             document.getElementById('selected-brand-text').innerText = "Select Car Brand...";
+            document.getElementById('car-model-input').value = "";
             document.getElementById('crash-display').innerText = "0";
             
             document.querySelectorAll('.toggle-box').forEach(el => el.setAttribute('data-active', 'false'));
@@ -628,6 +727,62 @@
             return `${m}:${s}.${mil}`;
         }
 
+        // Animated numbers for stats
+        function animateNumber(elementId, endValue, duration) {
+            const obj = document.getElementById(elementId);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * endValue);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = endValue;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function renderStats() {
+            const totalCars = db.garage.length;
+            const totalCrashes = db.garage.reduce((sum, car) => sum + car.crashes, 0);
+            
+            animateNumber('stat-cars', totalCars, 800);
+            animateNumber('stat-crashes', totalCrashes, 1000);
+
+            const lbContainer = document.getElementById('leaderboard-list');
+            lbContainer.innerHTML = '';
+            
+            // Sort by fastest time, grab top 5
+            const sortedRuns = [...db.garage].sort((a, b) => a.timeMs - b.timeMs).slice(0, 5);
+
+            if(sortedRuns.length === 0) {
+                lbContainer.innerHTML = `<div class="text-white/30 text-center py-6 text-xs font-bold border border-white/5 rounded-2xl bg-white/5">No runs saved yet.</div>`;
+                return;
+            }
+
+            sortedRuns.forEach((car, index) => {
+                const div = document.createElement('div');
+                div.className = 'glass-panel p-4 flex items-center gap-4 relative overflow-hidden border border-white/5';
+                
+                let medalColor = "text-gray-600";
+                if(index === 0) medalColor = "text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]";
+                if(index === 1) medalColor = "text-gray-300 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]";
+                if(index === 2) medalColor = "text-amber-600 drop-shadow-[0_0_5px_rgba(217,119,6,0.5)]";
+
+                div.innerHTML = `
+                    <div class="font-black text-2xl ${medalColor} w-6 text-center">#${index + 1}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-white truncate">${car.brand} <span class="text-white/50">${car.model}</span></div>
+                        <div class="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 truncate">${car.mapName}</div>
+                    </div>
+                    <div class="font-mono font-black text-lg text-emerald-400 tracking-tighter">${formatTime(car.timeMs)}</div>
+                `;
+                lbContainer.appendChild(div);
+            });
+        }
+
         let currentFinalResult = null;
 
         function calculateRating() {
@@ -649,45 +804,35 @@
             
             let score = 0;
             let avgLabel = "N/A (Calibrating)";
-            let bonusAmount = 0;
 
             if(isCalibrating) {
                 score = 0; 
             } else {
+                runState.model = document.getElementById('car-model-input').value.trim();
                 const looks = Math.round(parseFloat(document.getElementById('looks-slider').value));
                 const sound = Math.round(parseFloat(document.getElementById('sound-slider').value));
                 
+                // RATING IS STRICTLY ABOUT THE CAR NOW
                 score = (looks + sound) / 2;
-                score -= (runState.crashes * 0.2);
                 if(runState.soundBugged) score -= 0.5;
                 if(runState.isSlippery) score -= 0.5;
 
-                const avgMs = map.runs.reduce((a,b) => a+b, 0) / map.runs.length;
-                avgLabel = formatTime(avgMs);
-                const diffSec = (avgMs - runState.timeMs) / 1000;
-                
-                if(diffSec > 10) score += 0.5; 
-                else if (diffSec > 5) score += 0.25; 
-                else if (diffSec < -10) score -= 0.5;
-
-                // HUGE BONUS FOR SURVIVING A SURGE
-                if (runState.surgeMult > 1.0) {
-                    bonusAmount = (runState.surgeMult - 1) * 0.5; // e.g. 2x surge = +0.5 stars
-                    score += bonusAmount;
-                }
-
+                // Snap perfectly to 0.5 increments (e.g. 3.25 -> 3.5, 3.1 -> 3.0)
                 score = Math.max(0.5, Math.min(5.0, score));
                 score = Math.round(score * 2) / 2;
+
+                const avgMs = map.runs.reduce((a,b) => a+b, 0) / map.runs.length;
+                avgLabel = formatTime(avgMs);
             }
 
             currentFinalResult = {
                 brand: runState.brand,
+                model: runState.model,
                 mapName: map.name,
                 mapId: activeMapId,
                 timeMs: runState.timeMs,
                 crashes: runState.crashes,
                 score: score,
-                bonus: bonusAmount,
                 isCalib: isCalibrating,
                 date: new Date().getTime()
             };
@@ -696,14 +841,12 @@
         }
 
         function showResultScreen(avgLabel) {
-            document.getElementById('res-brand').innerText = currentFinalResult.isCalib ? `${currentFinalResult.brand} (CALIBRATION)` : currentFinalResult.brand;
+            const displayTitle = currentFinalResult.model ? `${currentFinalResult.brand} ${currentFinalResult.model}` : currentFinalResult.brand;
+            document.getElementById('res-brand').innerText = currentFinalResult.isCalib ? `${displayTitle} (CALIB)` : displayTitle;
             document.getElementById('res-score').innerText = currentFinalResult.isCalib ? "-" : currentFinalResult.score.toFixed(1);
             document.getElementById('res-time').innerText = formatTime(currentFinalResult.timeMs);
             document.getElementById('res-crashes').innerText = currentFinalResult.crashes;
             document.getElementById('res-avg').innerText = avgLabel;
-            
-            const bonusText = currentFinalResult.bonus > 0 ? `+${currentFinalResult.bonus.toFixed(1)} Stars` : "None";
-            document.getElementById('res-bonus').innerText = bonusText;
 
             const starContainer = document.getElementById('res-stars');
             const saveBtn = document.getElementById('res-save-btn');
@@ -768,14 +911,17 @@
 
                 const div = document.createElement('div');
                 div.className = 'glass-panel p-5 flex flex-col gap-3 relative overflow-hidden group';
+                
+                const displayTitle = car.model ? `${car.brand} <span class="text-white/60">${car.model}</span>` : car.brand;
+
                 div.innerHTML = `
                     <div class="absolute top-0 right-0 w-24 h-24 bg-[#e60000]/10 rounded-bl-full -z-10 blur-xl"></div>
                     <div class="flex justify-between items-start">
                         <div>
-                            <div class="font-black text-xl text-white/90 tracking-tight leading-none">${car.brand}</div>
+                            <div class="font-black text-xl text-white/90 tracking-tight leading-tight">${displayTitle}</div>
                             <div class="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1.5"><i class="fa-solid fa-location-dot mr-1"></i> ${car.mapName}</div>
                         </div>
-                        <div class="flex gap-0.5">${starsHTML}</div>
+                        <div class="flex gap-0.5 mt-1">${starsHTML}</div>
                     </div>
                     <div class="flex justify-between items-center mt-2 pt-3 border-t border-white/5">
                         <div class="text-xs font-bold text-white/60 font-mono"><i class="fa-solid fa-stopwatch mr-1 text-white/30"></i> ${formatTime(car.timeMs)}</div>
