@@ -1,946 +1,943 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>oknohesi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #050505;
-            color: #ffffff;
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden; 
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>okGarage — No Hesi Dashboard</title>
+<meta name="description" content="Premium Assetto Corsa No Hesi competitive dashboard by rick_grimesz">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#060609;--bg2:#0d0d1a;--card:rgba(13,13,26,.88);--card2:rgba(18,16,32,.9);
+  --p:#7c3aed;--pd:rgba(124,58,237,.15);--pg:rgba(124,58,237,.4);
+  --c:#06b6d4;--cd:rgba(6,182,212,.15);--cg:rgba(6,182,212,.4);
+  --f:#f97316;--fd:rgba(249,115,22,.15);
+  --g:#10b981;
+  --t1:#f0eeff;--t2:#8b8fa8;--t3:#4a4d65;
+  --b:rgba(124,58,237,.12);--bb:rgba(124,58,237,.35);
+  --r:16px;--rl:24px;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Outfit',sans-serif;overflow:hidden}
+#app{position:relative;width:100vw;height:100vh;overflow:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-        @keyframes drift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .bg-mesh {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 15% 50%, rgba(230, 0, 0, 0.08), transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(150, 0, 0, 0.05), transparent 50%);
-            background-size: 200% 200%;
-            animation: drift 25s ease infinite;
-        }
+/* PAGES */
+.page{
+  position:absolute;inset:0;z-index:1;overflow-y:auto;overflow-x:hidden;
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .45s var(--ease);
+  transform:translateX(24px);
+  padding-bottom:110px;
+  scrollbar-width:thin;scrollbar-color:var(--pd) transparent;
+}
+.page::-webkit-scrollbar{width:3px}
+.page::-webkit-scrollbar-thumb{background:var(--pd);border-radius:9px}
+.page.active{opacity:1;pointer-events:all;transform:translateX(0)}
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(230,0,0,0.5); border-radius: 10px; }
+/* DOCK */
+#dock{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;
+  display:flex;align-items:flex-end;gap:10px;padding:10px 18px;
+  background:rgba(8,6,16,.88);backdrop-filter:blur(24px);
+  border:1px solid rgba(124,58,237,.22);border-radius:22px;
+  box-shadow:0 8px 40px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.di{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative}
+.di-icon{
+  width:48px;height:48px;border-radius:13px;
+  background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.13);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:all .22s var(--spring);position:relative;
+}
+.di:hover .di-icon,.di.on .di-icon{
+  background:rgba(124,58,237,.22);border-color:rgba(124,58,237,.55);
+  box-shadow:0 0 20px rgba(124,58,237,.28);
+  transform:translateY(-9px) scale(1.16);
+}
+.di.on .di-icon::after{
+  content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;
+  background:var(--p);box-shadow:0 0 10px var(--p);
+}
+.di-tip{
+  position:absolute;top:-34px;left:50%;transform:translateX(-50%) translateY(6px);
+  background:rgba(8,6,16,.92);border:1px solid rgba(124,58,237,.22);
+  border-radius:7px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--t2);
+  white-space:nowrap;opacity:0;pointer-events:none;
+  transition:opacity .15s ease,transform .15s ease;
+}
+.di:hover .di-tip{opacity:1;transform:translateX(-50%) translateY(0)}
 
-        .spring-bounce {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .spring-bounce:active {
-            transform: scale(0.92);
-            transition: transform 0.1s;
-        }
+/* COMPETITIVE TOGGLE */
+#comp-toggle{
+  position:fixed;top:20px;right:20px;z-index:200;display:flex;align-items:center;gap:10px;
+  background:rgba(8,6,16,.85);backdrop-filter:blur(24px);
+  border:1px solid var(--b);border-radius:999px;padding:8px 14px;cursor:pointer;
+  transition:all .3s ease;user-select:none;
+}
+#comp-toggle:hover{border-color:var(--pg);box-shadow:0 0 24px rgba(124,58,237,.14)}
+.ct-label{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.06em;text-transform:uppercase}
+.ct-pill{width:36px;height:20px;border-radius:10px;background:var(--t3);position:relative;transition:background .3s ease}
+#comp-toggle.on .ct-pill{background:var(--p);box-shadow:0 0 14px rgba(124,58,237,.5)}
+.ct-pill::after{
+  content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:transform .3s var(--spring);
+}
+#comp-toggle.on .ct-pill::after{transform:translateX(16px)}
 
-        .glass-panel {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-red {
-            background: linear-gradient(135deg, #e60000, #990000);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(230, 0, 0, 0.25);
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-red::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
-            transform: skewX(-20deg);
-            transition: 0.5s;
-        }
-        .btn-red:active::after { left: 150%; }
+/* SHINY TEXT */
+@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}
+.sh{
+  background:linear-gradient(110deg,var(--t2) 28%,#fff 48%,var(--t2) 68%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;animation:shine 3s linear infinite;display:inline-block;
+}
+.sh-p{
+  background:linear-gradient(110deg,#a78bfa 28%,#fff 48%,#a78bfa 68%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;animation:shine 2.6s linear infinite;display:inline-block;
+}
+.sh-c{
+  background:linear-gradient(110deg,#67e8f9 28%,#fff 48%,#67e8f9 68%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;animation:shine 2.8s linear infinite;display:inline-block;
+}
 
-        .btn-amber {
-            background: linear-gradient(135deg, #d97706, #92400e);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(217, 119, 6, 0.25);
-        }
+/* STAR BUTTON */
+.sbtn{position:relative;display:inline-block;border-radius:999px;overflow:hidden;cursor:pointer;padding:2px}
+@keyframes sb1{from{transform:translateX(0)}to{transform:translateX(-300%)}}
+@keyframes sb2{from{transform:translateX(0)}to{transform:translateX(300%)}}
+.sbtn-b,.sbtn-t{position:absolute;width:300%;height:50%;border-radius:50%;opacity:.65;pointer-events:none}
+.sbtn-b{bottom:-14px;right:-250%;background:radial-gradient(circle,var(--p),transparent 12%);animation:sb1 5s linear infinite alternate}
+.sbtn-t{top:-14px;left:-250%;background:radial-gradient(circle,var(--c),transparent 12%);animation:sb2 5s linear infinite alternate}
+.sbtn-inner{
+  position:relative;z-index:1;background:rgba(5,5,14,.95);
+  border:1px solid rgba(124,58,237,.3);border-radius:999px;
+  padding:14px 38px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  color:var(--t1);letter-spacing:.07em;text-transform:uppercase;cursor:pointer;
+  transition:all .28s ease;
+}
+.sbtn:hover .sbtn-inner{border-color:var(--pg);box-shadow:0 0 34px rgba(124,58,237,.3);background:rgba(124,58,237,.1)}
 
-        .btn-gray {
-            background: rgba(40, 40, 40, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(8px);
-        }
+/* BACK BUTTON */
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(8,6,16,.72);backdrop-filter:blur(20px);
+  border:1px solid var(--b);border-radius:999px;
+  padding:7px 18px;font-family:'Outfit',sans-serif;font-size:13px;
+  font-weight:600;color:var(--t2);cursor:pointer;
+  transition:all .22s ease;
+}
+.back-btn:hover{border-color:var(--pg);color:var(--t1)}
 
-        .toggle-box {
-            border: 1px solid rgba(255,255,255,0.05);
-            background: rgba(30, 30, 30, 0.5);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .toggle-box[data-active="true"][data-type="good"] {
-            border-color: rgba(16, 185, 129, 0.5);
-            background: rgba(16, 185, 129, 0.1);
-            box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1), 0 0 15px rgba(16, 185, 129, 0.2);
-        }
-        .toggle-box[data-active="true"][data-type="bad"] {
-            border-color: rgba(239, 68, 68, 0.5);
-            background: rgba(239, 68, 68, 0.1);
-            box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.1), 0 0 15px rgba(239, 68, 68, 0.2);
-            transform: scale(0.95);
-        }
+/* HUB PAGE */
+#page-hub{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:44px;min-height:100vh;text-align:center;padding:40px 24px;
+}
+.hub-logo{
+  font-size:88px;font-weight:900;letter-spacing:-4px;line-height:1;
+  background:linear-gradient(140deg,#c4b5fd 0%,#7c3aed 40%,#06b6d4 80%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 50px rgba(124,58,237,.38));
+}
+.hub-sub{
+  font-size:18px;font-weight:300;color:var(--t2);
+  display:flex;align-items:center;gap:10px;height:28px;
+}
+#hub-rot{transition:opacity .38s ease,transform .38s ease;display:inline-block}
+.hub-stats{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.hstat{
+  background:var(--card);border:1px solid var(--b);border-radius:var(--r);
+  padding:22px 36px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  backdrop-filter:blur(20px);transition:all .3s ease;
+}
+.hstat:hover{border-color:var(--bb);box-shadow:0 0 36px rgba(124,58,237,.1);transform:translateY(-5px)}
+.hstat-val{
+  font-size:44px;font-weight:800;line-height:1;
+  background:linear-gradient(135deg,var(--p),var(--c));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hstat-lbl{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;margin-top:2px}
+.hub-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: linear-gradient(to right, #e60000 50%, rgba(255,255,255,0.1) 50%);
-            outline: none;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #ffffff;
-            cursor: pointer;
-            margin-top: -9px;
-            border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        input[type=range]::-webkit-slider-thumb:active {
-            transform: scale(1.2);
-        }
+/* PAGE HEADER */
+.ph{
+  padding:36px 32px 20px;display:flex;align-items:flex-end;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.ph-title{font-size:38px;font-weight:900;letter-spacing:-1.5px}
 
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        
-        .view-enter { animation: fadeInSlide 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        @keyframes fadeInSlide {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+/* FILTER TABS */
+.ftabs{
+  display:flex;gap:2px;padding:4px;
+  background:rgba(8,6,16,.7);border:1px solid var(--b);
+  border-radius:999px;backdrop-filter:blur(20px);position:relative;
+}
+.ftab{
+  padding:8px 20px;border-radius:999px;font-size:13px;font-weight:600;
+  color:var(--t3);cursor:pointer;transition:all .28s ease;position:relative;z-index:1;
+  border:none;background:none;font-family:'Outfit',sans-serif;white-space:nowrap;
+}
+.ftab.on{color:var(--t1)}
+.ftab.on::before{
+  content:'';position:absolute;inset:0;border-radius:999px;
+  background:linear-gradient(135deg,rgba(124,58,237,.28),rgba(6,182,212,.15));
+}
+.fslug{
+  position:absolute;height:calc(100% - 8px);top:4px;
+  background:rgba(124,58,237,.18);border-radius:999px;
+  transition:all .3s var(--ease);pointer-events:none;
+}
+.vtoggle{display:flex;gap:3px;padding:4px;background:rgba(8,6,16,.7);border:1px solid var(--b);border-radius:10px}
+.vbtn{
+  padding:7px 11px;border-radius:7px;border:none;background:none;color:var(--t3);
+  cursor:pointer;transition:all .2s ease;font-size:15px;font-family:'Outfit',sans-serif;
+}
+.vbtn.on{background:rgba(124,58,237,.22);color:var(--t1)}
 
-        @keyframes pulse-red {
-            0% { text-shadow: 0 0 10px rgba(230,0,0,0.2); }
-            50% { text-shadow: 0 0 25px rgba(230,0,0,0.6); }
-            100% { text-shadow: 0 0 10px rgba(230,0,0,0.2); }
-        }
-        .timer-active {
-            animation: pulse-red 1.5s infinite ease-in-out;
-        }
+/* GARAGE */
+.gc{padding:0 32px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.gc-count{font-size:13px;color:var(--t3)}
+.gc-count strong{color:var(--p);font-weight:700}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:16px;padding:0 32px 32px}
+.cgrid.lv{grid-template-columns:1fr}
 
-        #rating-controls-container { position: relative; }
-        #calibration-blur-overlay {
-            position: absolute;
-            inset: -10px;
-            background: rgba(5, 5, 5, 0.4);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border-radius: 24px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        #calibration-blur-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        .lock-icon-container {
-            background: rgba(20,20,20,0.8);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 16px;
-            border-radius: 50%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 8px;
-        }
+.cc{
+  position:relative;background:var(--card);border:1px solid var(--b);
+  border-radius:var(--rl);overflow:hidden;cursor:pointer;
+  transition:all .32s var(--ease);backdrop-filter:blur(20px);
+}
+.cc:hover{border-color:var(--bb);transform:translateY(-7px);box-shadow:0 22px 64px rgba(0,0,0,.42),0 0 44px rgba(124,58,237,.1)}
+.cc.locked{border-color:rgba(249,115,22,.22)}
+.cc.locked:hover{border-color:rgba(249,115,22,.45);box-shadow:0 22px 64px rgba(0,0,0,.42),0 0 44px rgba(249,115,22,.1)}
+.cpw{overflow:hidden;position:relative}
+.cpimg{width:100%;height:164px;object-fit:cover;display:block;transition:transform .42s ease;
+  background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05))}
+.cc:hover .cpimg{transform:scale(1.06)}
+.cpph{width:100%;height:164px;display:flex;align-items:center;justify-content:center;
+  font-size:52px;opacity:.3;
+  background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.04))}
+.clock{position:absolute;inset:0;background:rgba(249,115,22,.16);
+  display:flex;align-items:center;justify-content:center;font-size:34px;backdrop-filter:blur(2px)}
+.ci{padding:16px}
+.cn{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbr{font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.csrow{display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b)}
+.cs{display:flex;flex-direction:column;gap:2px;flex:1}
+.csv{font-size:14px;font-weight:700;color:var(--p)}
+.csk{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
 
-        .dropdown-sheet {
-            transform: translateY(100%);
-            bottom: 0;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .dropdown-sheet.open { transform: translateY(0); }
-        
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-    </style>
+.cgrid.lv .cc{display:flex;flex-direction:row;align-items:center;height:80px;border-radius:13px}
+.cgrid.lv .cpw{width:116px;min-width:116px;height:80px;flex-shrink:0;border-radius:13px 0 0 13px}
+.cgrid.lv .cpimg,.cgrid.lv .cpph{height:80px}
+.cgrid.lv .cpph{font-size:28px}
+.cgrid.lv .ci{display:flex;align-items:center;gap:24px;padding:12px 20px;flex:1}
+.cgrid.lv .cn{margin:0;font-size:14px;width:200px;min-width:200px}
+.cgrid.lv .cbr{min-width:80px}
+.cgrid.lv .csrow{margin:0;padding:0;border:none;flex:1;justify-content:flex-end}
+
+/* CAR DETAIL */
+.dh{position:relative;height:58vh;display:flex;align-items:flex-end;overflow:hidden}
+#silk-canvas{position:absolute;inset:0;z-index:0}
+.dhimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;
+  filter:drop-shadow(0 24px 64px rgba(0,0,0,.8));transition:transform .55s ease}
+.dhimg:hover{transform:scale(1.03) translateY(-8px)}
+.dhgrad{position:absolute;bottom:0;left:0;right:0;height:65%;
+  background:linear-gradient(to top,var(--bg) 20%,transparent);z-index:2}
+.dback{position:absolute;top:20px;left:20px;z-index:10}
+.dbody{padding:0 44px 44px;max-width:980px;margin:0 auto}
+.dcn{font-size:50px;font-weight:900;letter-spacing:-2px;line-height:1;margin-bottom:8px}
+.dcbr{font-size:13px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.15em;margin-bottom:36px}
+.dsdg{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin-bottom:36px}
+.dspec{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:16px;backdrop-filter:blur(20px)}
+.dspecv{font-size:24px;font-weight:800;color:var(--p);margin-bottom:3px}
+.dspeck{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em}
+.dchart{background:var(--card);border:1px solid var(--b);border-radius:var(--rl);padding:24px;
+  margin-bottom:36px;backdrop-filter:blur(20px);height:280px;position:relative}
+.ddesc{font-size:14px;line-height:1.75;color:var(--t2);margin-bottom:28px;max-width:640px}
+.dacts{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+
+/* MAPS */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;padding:0 32px 32px}
+.mc{
+  position:relative;border-radius:var(--rl);overflow:hidden;cursor:pointer;
+  aspect-ratio:16/9;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.04));
+  border:1px solid var(--b);transition:all .38s var(--ease);
+}
+.mc:hover{transform:scale(1.03);border-color:rgba(6,182,212,.4);
+  box-shadow:0 20px 64px rgba(0,0,0,.5),0 0 44px rgba(6,182,212,.1)}
+.mcimg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .55s ease}
+.mc:hover .mcimg{transform:scale(1.09)}
+.mcov{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(5,5,12,.92) 0%,rgba(5,5,12,.1) 60%);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:20px}
+.mcn{font-size:20px;font-weight:700;margin-bottom:6px}
+.mctags{display:flex;gap:6px;flex-wrap:wrap}
+.mcph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:68px;opacity:.18}
+.tag{
+  padding:2px 9px;background:rgba(6,182,212,.14);border:1px solid rgba(6,182,212,.28);
+  border-radius:5px;font-size:10px;color:var(--c);text-transform:uppercase;letter-spacing:.08em;
+}
+
+/* MAP DETAIL */
+.mdh{position:relative;height:52vh;overflow:hidden}
+.mdhimg{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
+.mdhgrad{position:absolute;inset:0;background:linear-gradient(to top,var(--bg) 14%,rgba(5,5,12,.25) 60%,transparent)}
+.mdbody{padding:24px 44px 44px;max-width:820px;margin:0 auto}
+.mdn{font-size:44px;font-weight:900;letter-spacing:-1.5px;margin-bottom:10px}
+
+/* ACCOUNT */
+#page-account{padding:36px 32px}
+.acclayout{display:grid;grid-template-columns:370px 1fr;gap:24px;align-items:start;max-width:1120px;margin:0 auto}
+
+.rcard{
+  background:rgba(12,10,22,.92);border:1px solid rgba(124,58,237,.26);
+  border-radius:24px;padding:32px;backdrop-filter:blur(32px);
+  position:relative;overflow:hidden;cursor:default;
+  transition:transform .12s ease,box-shadow .3s ease;
+  box-shadow:0 0 48px rgba(124,58,237,.1);
+}
+.rcard::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(124,58,237,.1) 0%,transparent 55%,rgba(6,182,212,.06) 100%);
+  border-radius:inherit;pointer-events:none;
+}
+.rcshine{
+  position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(135deg,transparent 38%,rgba(255,255,255,.035) 50%,transparent 62%);
+  background-size:200% 200%;animation:rcsh 5s ease infinite;
+}
+@keyframes rcsh{0%{background-position:200% 200%}50%{background-position:-200% -200%}100%{background-position:200% 200%}}
+.rcav{display:flex;flex-direction:column;align-items:center;gap:16px;margin-bottom:24px;position:relative;z-index:1}
+.rcav-wrap{position:relative;width:100px;height:100px}
+.rcav-ring{
+  position:absolute;inset:-4px;border-radius:50%;
+  background:conic-gradient(from 0deg,var(--p),var(--c),var(--f),var(--p));
+  animation:spin 4s linear infinite;
+}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.rcav-inner{
+  position:absolute;inset:3px;border-radius:50%;background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;font-size:42px;z-index:1;
+}
+.rc-name{
+  font-size:22px;font-weight:900;letter-spacing:-.5px;
+  text-shadow:0 1px 0 rgba(124,58,237,.8),0 2px 0 rgba(124,58,237,.6),0 3px 0 rgba(124,58,237,.4),0 5px 0 rgba(124,58,237,.15),0 8px 12px rgba(0,0,0,.4);
+  background:linear-gradient(180deg,#f0eeff 0%,#a78bfa 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(124,58,237,.45));
+}
+.rc-handle{font-size:12px;color:var(--t3);letter-spacing:.08em}
+.rcbadge{text-align:center;margin-bottom:22px;position:relative;z-index:1}
+.rcbadge-icon{font-size:44px;display:block;margin-bottom:8px}
+.rcbadge-name{font-size:18px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.rcbadge-tier{font-size:10px;color:var(--t3);letter-spacing:.15em;text-transform:uppercase;margin-top:4px}
+.rcxp{position:relative;z-index:1;margin-bottom:24px}
+.xp-hdr{display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:6px}
+.xp-bar{height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.xp-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--p),var(--c));
+  box-shadow:0 0 14px rgba(124,58,237,.55);
+  transition:width 1.1s var(--ease);position:relative;overflow:hidden;
+}
+.xp-fill::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+  animation:xpsh 2.2s ease infinite}
+@keyframes xpsh{0%{left:-100%}100%{left:200%}}
+.xp-lbs{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:4px}
+.rcstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+.rcstat{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:11px;padding:12px;text-align:center}
+.rcstat-v{font-size:20px;font-weight:800;color:var(--p)}
+.rcstat-k{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.spanel{display:flex;flex-direction:column;gap:16px}
+.ssec{background:var(--card);border:1px solid var(--b);border-radius:var(--rl);padding:24px;backdrop-filter:blur(20px)}
+.ssec-t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:16px}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sit{text-align:center}
+.siv{font-size:28px;font-weight:800;
+  background:linear-gradient(135deg,var(--p),var(--c));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sik{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.rlist{display:flex;flex-direction:column;gap:7px}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:11px;border:1px solid transparent;transition:all .2s ease}
+.rrow.cur{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3)}
+.rrow-icon{font-size:20px}
+.rrow-info{flex:1}
+.rrow-name{font-size:13px;font-weight:600}
+.rrow-req{font-size:11px;color:var(--t3)}
+.rbadge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:5px;
+  text-transform:uppercase;letter-spacing:.06em;
+  background:rgba(124,58,237,.2);color:var(--p);border:1px solid rgba(124,58,237,.3)}
+
+.srow{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--b)}
+.srow:last-child{border-bottom:none}
+.slbl{font-size:14px;font-weight:500}
+.sdesc{font-size:12px;color:var(--t3);margin-top:2px}
+.sinp{
+  background:rgba(255,255,255,.05);border:1px solid var(--b);border-radius:9px;
+  padding:9px 13px;color:var(--t1);font-family:'Outfit',sans-serif;font-size:13px;
+  min-width:220px;transition:border-color .2s ease;
+}
+.sinp:focus{outline:none;border-color:var(--p);box-shadow:0 0 14px rgba(124,58,237,.2)}
+.sbtn2{
+  background:var(--p);border:none;border-radius:9px;padding:9px 22px;
+  color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .22s ease;
+}
+.sbtn2:hover{background:#6d28d9;box-shadow:0 0 22px rgba(124,58,237,.4)}
+
+.credits{text-align:center;padding:20px;font-size:11px;color:var(--t3);letter-spacing:.05em;border-top:1px solid var(--b);margin-top:16px}
+.credits span{color:var(--p)}
+
+.empty{text-align:center;padding:90px 40px;color:var(--t3);grid-column:1/-1}
+.empty-ic{font-size:60px;margin-bottom:16px;opacity:.4}
+.empty-tx{font-size:16px;font-weight:500}
+
+#notif{
+  position:fixed;top:20px;left:50%;
+  transform:translateX(-50%) translateY(-90px);z-index:999;
+  background:rgba(8,6,16,.96);border:1px solid var(--bb);border-radius:999px;
+  padding:12px 26px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;
+  backdrop-filter:blur(24px);box-shadow:0 8px 32px rgba(0,0,0,.45);
+  transition:transform .4s var(--spring);white-space:nowrap;
+}
+#notif.show{transform:translateX(-50%) translateY(0)}
+
+.st{font-size:22px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.st::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bb) 0%,transparent 100%)}
+
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.07) 50%,rgba(255,255,255,.03) 75%);
+  background-size:400% 100%;animation:skel 1.5s ease infinite;border-radius:8px}
+@keyframes skel{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+@media(max-width:780px){
+  .hub-logo{font-size:56px}
+  .acclayout{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));padding:0 16px 16px}
+  .mgrid{grid-template-columns:1fr;padding:0 16px 16px}
+  .ph{padding:24px 16px 16px}
+  .dbody,.mdbody{padding:0 20px 40px}
+  .dcn{font-size:34px}
+  #dock{gap:6px;padding:8px 12px}
+  .di-icon{width:42px;height:42px;font-size:18px}
+}
+</style>
 </head>
-<body class="antialiased w-full h-screen relative">
-    <div class="bg-mesh"></div>
+<body>
+<div id="app">
+<canvas id="bg-canvas"></canvas>
+<div id="notif"><span id="ni">ok</span><span id="nt">Done</span></div>
+<div id="comp-toggle" onclick="toggleComp()">
+  <span style="font-size:13px">!</span>
+  <span class="ct-label">Competitive</span>
+  <div class="ct-pill"></div>
+</div>
 
-    <div id="app" class="max-w-md mx-auto h-full relative flex flex-col">
-        
-        <header class="p-4 flex justify-between items-center z-10">
-            <div class="text-xl font-extrabold tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-gauge-high text-[#e60000]"></i> 
-                <span class="text-[#e60000] drop-shadow-md">OK</span>
-                <span class="text-white/90">NOHESI</span>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="switchView('stats')" class="spring-bounce text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 p-2 rounded-full w-10 h-10 flex items-center justify-center border border-yellow-500/20 shadow-sm">
-                    <i class="fa-solid fa-trophy"></i>
-                </button>
-                <button onclick="switchView('garage')" class="spring-bounce text-gray-400 hover:text-white bg-white/5 p-2 rounded-full w-10 h-10 flex items-center justify-center border border-white/5 shadow-sm">
-                    <i class="fa-solid fa-warehouse"></i>
-                </button>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto overflow-x-hidden relative">
-            
-            <div id="view-map-select" class="p-4 flex flex-col gap-4 pb-10">
-                <h2 class="text-2xl font-bold text-white/90 mt-2 tracking-tight">Select Circuit</h2>
-                <div class="text-xs text-white/50 mb-2 italic">enter base npc cars so the system can randomize traffic surges.</div>
-                
-                <!-- FIXED MOBILE LAYOUT -->
-                <div class="flex gap-2 mb-4 w-full">
-                    <input type="text" id="new-map-input" placeholder="Map (e.g. SRP)" class="flex-[3] min-w-0 glass-panel px-3 py-3 text-sm text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
-                    <input type="number" id="new-map-traffic" placeholder="Cars" class="flex-[1] min-w-0 glass-panel px-2 py-3 text-sm text-center text-white focus:outline-none focus:border-[#e60000]/50 transition shadow-inner">
-                    <button onclick="addMap()" class="shrink-0 spring-bounce btn-red px-4 rounded-xl font-bold text-white"><i class="fa-solid fa-plus"></i></button>
-                </div>
-
-                <div id="map-list" class="flex flex-col gap-3"></div>
-            </div>
-
-            <div id="view-rating" class="hidden p-4 flex flex-col gap-5 pb-24">
-                <div class="flex justify-between items-center mb-[-10px]">
-                    <button onclick="switchView('map-select')" class="spring-bounce text-gray-400 text-sm flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full"><i class="fa-solid fa-chevron-left text-xs"></i> Back</button>
-                    <span id="current-map-label" class="text-[10px] font-bold text-[#e60000] uppercase tracking-widest bg-[#e60000]/10 px-2.5 py-1 rounded-full border border-[#e60000]/20">MAP</span>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <button onclick="openBrandDropdown()" id="brand-selector-btn" class="spring-bounce glass-panel w-full py-4 px-5 flex justify-between items-center text-left">
-                        <span id="selected-brand-text" class="text-white/70 font-bold text-lg">Select Car Brand...</span>
-                        <i class="fa-solid fa-caret-down text-white/30"></i>
-                    </button>
-                    <input type="text" id="car-model-input" placeholder="Optional: Model & Year (e.g. M4 Comp 2023)" class="glass-panel w-full py-3 px-5 text-sm text-white focus:outline-none focus:border-[#e60000]/50 transition border border-white/5 shadow-inner">
-                    
-                    <div id="calibration-warning" class="text-[11px] text-center text-amber-400 font-bold bg-amber-500/10 py-2 rounded-lg border border-amber-500/20 hidden uppercase tracking-wide shadow-[0_0_15px_rgba(217,119,6,0.1)] mt-1">
-                        <i class="fa-solid fa-bolt mr-1"></i> 3 runs needed to calibrate map
-                    </div>
-                </div>
-
-                <div id="traffic-surge-box" class="glass-panel p-3 flex justify-between items-center border border-white/5 transition-colors">
-                    <span class="text-[10px] font-bold text-white/50 uppercase tracking-widest"><i class="fa-solid fa-car-side mr-1"></i> Set CM Traffic</span>
-                    <span id="traffic-target-display" class="font-black text-sm text-white">0 <span id="surge-label" class="text-gray-400 text-[10px] ml-1">(NORMAL)</span></span>
-                </div>
-
-                <div class="glass-panel flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-[#e60000]/10 rounded-full blur-3xl -z-10 translate-x-10 -translate-y-10"></div>
-                    <div id="timer-display" class="text-5xl font-black tracking-tighter mb-4 font-mono text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">00:00.00</div>
-                    <button id="timer-btn" onclick="toggleTimer()" class="spring-bounce w-full btn-red py-3 rounded-xl font-bold uppercase tracking-widest text-sm shadow-xl">
-                        Start Run
-                    </button>
-                </div>
-
-                <div id="rating-controls-container">
-                    
-                    <div id="calibration-blur-overlay">
-                        <div class="lock-icon-container">
-                            <i class="fa-solid fa-lock text-2xl"></i>
-                        </div>
-                        <span class="text-xs font-bold text-white/60 uppercase tracking-widest">Controls Locked</span>
-                        <span class="text-[10px] text-white/40 mt-1">Finish calibration first</span>
-                    </div>
-
-                    <div class="flex flex-col gap-4">
-                        <button onclick="addCrash()" class="spring-bounce glass-panel w-full flex flex-row items-center justify-between p-5">
-                            <div class="flex flex-col text-left">
-                                <span class="text-xs text-white/50 font-bold uppercase tracking-widest mb-1">Total Crashes</span>
-                                <span class="text-[10px] text-[#e60000] font-semibold bg-[#e60000]/10 px-2 py-0.5 rounded-sm w-max border border-[#e60000]/20">TAP TO ADD</span>
-                            </div>
-                            <div id="crash-display" class="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(230,0,0,0.4)]">0</div>
-                        </button>
-
-                        <div class="flex gap-3">
-                            <div onclick="toggleState(this, 'soundBugged')" data-active="false" data-type="bad" class="spring-bounce toggle-box flex-1 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer">
-                                <i class="fa-solid fa-volume-xmark text-xl text-white/60"></i>
-                                <span class="text-[11px] font-bold text-center text-white/80">Sound<br>Bugged?</span>
-                            </div>
-                            <div onclick="toggleState(this, 'isSlippery')" data-active="false" data-type="bad" class="spring-bounce toggle-box flex-1 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer">
-                                <i class="fa-solid fa-car-burst text-xl text-white/60"></i>
-                                <span class="text-[11px] font-bold text-center text-white/80">Too<br>Slippery?</span>
-                            </div>
-                        </div>
-
-                        <div class="glass-panel p-6 flex flex-col gap-6">
-                            <div>
-                                <div class="flex justify-between items-center mb-4">
-                                    <span class="font-bold text-[11px] uppercase tracking-widest text-white/50">Looks & Model</span>
-                                    <span id="looks-val" class="font-black text-xl text-white">3</span>
-                                </div>
-                                <input type="range" id="looks-slider" min="1" max="5" step="0.01" value="3" oninput="updateSlider(this, 'looks-val')" onchange="snapSliderAnimated(this, 'looks-val')">
-                            </div>
-                            
-                            <hr class="border-white/5">
-
-                            <div>
-                                <div class="flex justify-between items-center mb-4">
-                                    <span class="font-bold text-[11px] uppercase tracking-widest text-white/50">Sound Quality</span>
-                                    <span id="sound-val" class="font-black text-xl text-white">3</span>
-                                </div>
-                                <input type="range" id="sound-slider" min="1" max="5" step="0.01" value="3" oninput="updateSlider(this, 'sound-val')" onchange="snapSliderAnimated(this, 'sound-val')">
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <button id="get-rating-btn" onclick="calculateRating()" class="spring-bounce btn-red w-full py-4 rounded-xl font-black text-lg uppercase tracking-widest mt-2 shadow-2xl flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-calculator"></i> Get Rating
-                </button>
-            </div>
-
-            <!-- VIEW: LEADERBOARD & STATS -->
-            <div id="view-stats" class="hidden p-4 flex flex-col gap-6 pb-24">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-2xl font-bold text-white/90 tracking-tight">All-Time Stats</h2>
-                    <button onclick="switchView('map-select')" class="spring-bounce btn-gray px-4 py-2 rounded-xl text-sm font-bold shadow-lg"><i class="fa-solid fa-house"></i></button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="glass-panel p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-[#e60000]/10 blur-xl rounded-full"></div>
-                        <i class="fa-solid fa-car text-xl text-white/40 mb-2"></i>
-                        <div id="stat-cars" class="text-4xl font-black text-white tracking-tighter">0</div>
-                        <div class="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Cars Tested</div>
-                    </div>
-                    <div class="glass-panel p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                        <div class="absolute -left-4 -bottom-4 w-16 h-16 bg-[#e60000]/10 blur-xl rounded-full"></div>
-                        <i class="fa-solid fa-car-burst text-xl text-[#e60000]/80 mb-2"></i>
-                        <div id="stat-crashes" class="text-4xl font-black text-white tracking-tighter">0</div>
-                        <div class="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Total Crashes</div>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <h3 class="font-bold text-xs text-yellow-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-trophy"></i> Top 5 Fastest Runs
-                    </h3>
-                    <div id="leaderboard-list" class="flex flex-col gap-2"></div>
-                </div>
-            </div>
-
-            <div id="view-garage" class="hidden p-4 flex flex-col gap-4 pb-24">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-2xl font-bold text-white/90 tracking-tight">My Garage</h2>
-                    <button onclick="switchView('map-select')" class="spring-bounce btn-gray px-4 py-2 rounded-xl text-sm font-bold shadow-lg"><i class="fa-solid fa-house"></i></button>
-                </div>
-                
-                <div class="glass-panel p-4 flex items-center gap-5 border border-white/5">
-                    <i id="rank-icon" class="fa-solid fa-car-side text-4xl text-gray-400"></i>
-                    <div class="flex flex-col">
-                        <div id="rank-title" class="font-black text-xl text-white tracking-tight">Rookie</div>
-                        <div id="rank-stats" class="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">0 TOTAL STARS</div>
-                    </div>
-                </div>
-
-                <div id="garage-list" class="flex flex-col gap-3"></div>
-            </div>
-        </div>
-
-        <div id="brand-sheet" class="dropdown-sheet fixed left-0 right-0 mx-auto max-w-md w-full h-[75%] glass-panel !rounded-t-3xl !rounded-b-none !border-b-0 border-white/10 z-[100] flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
-            <div class="p-5 flex justify-between items-center">
-                <h3 class="font-bold text-lg text-white/90">Select Brand</h3>
-                <button onclick="closeBrandDropdown()" class="spring-bounce text-white/40 bg-white/5 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="brand-list-container" class="flex-1 overflow-y-auto px-2 pb-4 flex flex-col gap-1"></div>
-        </div>
-
-        <div id="map-action-sheet" class="dropdown-sheet fixed left-0 right-0 mx-auto max-w-md w-full h-auto glass-panel !rounded-t-3xl !rounded-b-none !border-b-0 border-white/10 z-[100] flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-8">
-            <div class="p-5 flex justify-between items-center border-b border-white/5">
-                <h3 id="map-action-name" class="font-bold text-lg text-white/90">Map Name</h3>
-                <button onclick="closeMapOptions()" class="spring-bounce text-white/40 bg-white/5 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="flex flex-col gap-2 p-4">
-                <button onclick="renameMap()" class="spring-bounce w-full bg-white/5 border border-white/10 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2"><i class="fa-solid fa-pen"></i> Rename Circuit</button>
-                <button onclick="deleteMap()" class="spring-bounce w-full bg-[#e60000]/20 border border-[#e60000]/30 py-4 rounded-xl font-bold text-[#e60000] flex items-center justify-center gap-2 mt-2"><i class="fa-solid fa-trash"></i> Delete Circuit & Times</button>
-            </div>
-        </div>
-
-        <div id="result-overlay" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6">
-            <div class="glass-panel w-full max-w-sm p-8 flex flex-col items-center animate-pop text-center relative border-[#e60000]/40 border-2 overflow-hidden shadow-[0_0_50px_rgba(230,0,0,0.15)]">
-                
-                <div class="absolute top-0 right-0 w-40 h-40 bg-[#e60000]/20 rounded-full blur-3xl -z-10 translate-x-10 -translate-y-10"></div>
-
-                <h2 class="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2" id="res-brand">Brand</h2>
-                <div class="text-6xl font-black text-white mb-6 tracking-tighter drop-shadow-lg" id="res-score">0.0</div>
-                
-                <div class="flex gap-2 mb-6 text-2xl text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" id="res-stars"></div>
-
-                <div class="w-full bg-black/40 rounded-xl p-4 flex flex-col gap-3 text-sm font-bold border border-white/5 mb-6 text-left backdrop-blur-md">
-                    <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Time</span> <span id="res-time" class="text-white font-mono">00:00.00</span></div>
-                    <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Crashes</span> <span id="res-crashes" class="text-[#e60000] bg-[#e60000]/10 px-2 rounded">0</span></div>
-                    <div class="flex justify-between items-center"><span class="text-white/40 uppercase text-[10px] tracking-widest">Map Avg</span> <span id="res-avg" class="text-white/60 font-mono">N/A</span></div>
-                </div>
-
-                <button id="res-save-btn" onclick="saveAndCloseResult()" class="spring-bounce btn-red w-full py-4 rounded-xl font-bold uppercase tracking-widest shadow-xl">
-                    Save to Garage
-                </button>
-            </div>
-        </div>
-
+<!-- HUB -->
+<div id="page-hub" class="page">
+  <div>
+    <div class="hub-logo"><span class="sh-p">ok</span>Garage</div>
+    <div class="hub-sub">
+      <span style="color:var(--t3)">-&gt;</span>
+      <span id="hub-rot">Select your weapon.</span>
     </div>
+  </div>
+  <div class="hub-stats">
+    <div class="hstat"><div class="hstat-val" id="hs-cars">0</div><div class="hstat-lbl">Cars</div></div>
+    <div class="hstat"><div class="hstat-val" id="hs-maps">0</div><div class="hstat-lbl">Maps</div></div>
+    <div class="hstat"><div class="hstat-val" id="hs-tuned">0</div><div class="hstat-lbl">Tuned</div></div>
+  </div>
+  <div class="sbtn" onclick="nav('garage')">
+    <div class="sbtn-b"></div><div class="sbtn-t"></div>
+    <div class="sbtn-inner">Enter Garage</div>
+  </div>
+  <div class="hub-btns">
+    <button class="back-btn" onclick="nav('maps')">Maps</button>
+    <button class="back-btn" onclick="nav('account')">Profile</button>
+  </div>
+</div>
 
-    <script>
-        const BRANDS = [
-            "Alfa Romeo", "Aston Martin", "Audi", "Bentley", "BMW", "Bugatti", 
-            "Cadillac", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", 
-            "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Lamborghini", 
-            "Lexus", "Lotus", "Maserati", "Mazda", "McLaren", "Mercedes-Benz", 
-            "Mitsubishi", "Nissan", "Pagani", "Peugeot", "Porsche", "Renault", 
-            "Rolls-Royce", "Subaru", "Suzuki", "Toyota", "Volkswagen", "Volvo"
-        ];
+<!-- GARAGE -->
+<div id="page-garage" class="page">
+  <div class="ph">
+    <div>
+      <button class="back-btn" onclick="nav('hub')" style="margin-bottom:10px">&larr; Hub</button>
+      <div class="ph-title"><span class="sh-p">Garage</span></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="ftabs" id="ftabs">
+        <div class="fslug" id="fslug"></div>
+        <button class="ftab on" data-f="all" onclick="setF('all')">All</button>
+        <button class="ftab" data-f="tuned" onclick="setF('tuned')">Tuned</button>
+        <button class="ftab" data-f="stock" onclick="setF('stock')">Stock</button>
+        <button class="ftab" data-f="locked" onclick="setF('locked')">Locked</button>
+      </div>
+      <div class="vtoggle">
+        <button class="vbtn on" id="vg" onclick="setV('grid')" title="Grid">Grid</button>
+        <button class="vbtn" id="vl" onclick="setV('list')" title="List">List</button>
+      </div>
+    </div>
+  </div>
+  <div class="gc"><div class="gc-count">Showing <strong id="gcount">0</strong> cars</div></div>
+  <div class="cgrid" id="cgrid"></div>
+</div>
 
-        let db = {
-            maps: JSON.parse(localStorage.getItem('ac_maps')) || {},
-            garage: JSON.parse(localStorage.getItem('ac_garage')) || []
-        };
+<!-- CAR DETAIL -->
+<div id="page-car-detail" class="page">
+  <div class="dh">
+    <canvas id="silk-canvas"></canvas>
+    <img id="dcimg" class="dhimg" src="" alt="">
+    <div class="dhgrad"></div>
+    <div class="dback"><button class="back-btn" onclick="backFromCar()">&larr; Back</button></div>
+  </div>
+  <div class="dbody">
+    <div class="dcn" id="dcn"></div>
+    <div class="dcbr" id="dcbr"></div>
+    <div class="ddesc" id="dcdesc"></div>
+    <div class="dsdg" id="dsdg"></div>
+    <div class="dchart" id="dchart-wrap"><canvas id="pchart"></canvas></div>
+    <div class="dacts">
+      <div class="sbtn" id="drive-btn">
+        <div class="sbtn-b"></div><div class="sbtn-t"></div>
+        <div class="sbtn-inner" onclick="launchCar()">Drive Now</div>
+      </div>
+      <button class="back-btn" onclick="backFromCar()">&larr; Back to Garage</button>
+    </div>
+  </div>
+</div>
 
-        let activeMapId = null;
-        let runState = { brand: "", model: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: 1 };
-        let timerInterval, startTime;
-        let isRunning = false;
-        
-        let pressTimer;
-        let isLongPress = false;
+<!-- MAPS -->
+<div id="page-maps" class="page">
+  <div class="ph">
+    <div>
+      <button class="back-btn" onclick="nav('hub')" style="margin-bottom:10px">&larr; Hub</button>
+      <div class="ph-title"><span class="sh-c">Maps</span></div>
+    </div>
+  </div>
+  <div class="mgrid" id="mgrid"></div>
+</div>
 
-        const triggerHaptic = () => { if (navigator.vibrate) navigator.vibrate(50); };
+<!-- MAP DETAIL -->
+<div id="page-map-detail" class="page">
+  <div class="mdh">
+    <img id="mdimg" class="mdhimg" src="" alt="">
+    <div class="mdhgrad"></div>
+    <div style="position:absolute;top:20px;left:20px;z-index:10">
+      <button class="back-btn" onclick="backFromMap()">&larr; Back</button>
+    </div>
+  </div>
+  <div class="mdbody">
+    <div class="mdn" id="mdn"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="mdtags"></div>
+    <div style="font-size:14px;color:var(--t2);line-height:1.75;margin-bottom:32px" id="mddesc"></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <div class="sbtn">
+        <div class="sbtn-b"></div><div class="sbtn-t"></div>
+        <div class="sbtn-inner" onclick="launchMap()">Race Here</div>
+      </div>
+      <button class="back-btn" onclick="backFromMap()">&larr; Back to Maps</button>
+    </div>
+  </div>
+</div>
 
-        window.onload = () => { renderMapList(); populateBrands(); };
+<!-- ACCOUNT -->
+<div id="page-account" class="page">
+  <div class="ph">
+    <div>
+      <button class="back-btn" onclick="nav('hub')" style="margin-bottom:10px">&larr; Hub</button>
+      <div class="ph-title">Profile</div>
+    </div>
+  </div>
+  <div class="acclayout">
+    <div>
+      <div class="rcard" id="rcard">
+        <div class="rcshine"></div>
+        <div class="rcav">
+          <div class="rcav-wrap">
+            <div class="rcav-ring"></div>
+            <div class="rcav-inner">R</div>
+          </div>
+          <div class="rc-name" id="rc-name">rick_grimesz</div>
+          <div class="rc-handle">@rick_grimesz - No Hesi Driver</div>
+        </div>
+        <div class="rcbadge">
+          <span class="rcbadge-icon" id="r-icon">*</span>
+          <div class="rcbadge-name" id="r-title" style="color:#6b7280">Street Novice</div>
+          <div class="rcbadge-tier" id="r-tier">Tier 1 / 10</div>
+        </div>
+        <div class="rcxp">
+          <div class="xp-hdr"><span>XP Progress</span><span id="r-xp">0 XP</span></div>
+          <div class="xp-bar"><div class="xp-fill" id="xpfill" style="width:0%"></div></div>
+          <div class="xp-lbs"><span id="xp-cur">0</span><span id="xp-nxt">100 to next rank</span></div>
+        </div>
+        <div class="rcstats">
+          <div class="rcstat"><div class="rcstat-v" id="rc-cars">0</div><div class="rcstat-k">Cars</div></div>
+          <div class="rcstat"><div class="rcstat-v" id="rc-maps">0</div><div class="rcstat-k">Maps</div></div>
+          <div class="rcstat"><div class="rcstat-v" id="rc-sess">0</div><div class="rcstat-k">Sessions</div></div>
+          <div class="rcstat"><div class="rcstat-v" id="rc-tuned">0</div><div class="rcstat-k">Tuned</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="spanel">
+      <div class="ssec">
+        <div class="ssec-t">Rank Ladder</div>
+        <div class="rlist" id="rlist"></div>
+      </div>
+      <div class="ssec">
+        <div class="st" style="font-size:16px">Settings</div>
+        <div class="srow">
+          <div><div class="slbl">AC Path</div><div class="sdesc">Assetto Corsa installation folder</div></div>
+          <input class="sinp" id="s-ac" placeholder="C:\Program Files (x86)\Steam\steamapps\common\assettocorsa">
+        </div>
+        <div class="srow">
+          <div><div class="slbl">Screenshots Path</div><div class="sdesc">Where AC saves screenshots</div></div>
+          <input class="sinp" id="s-sc" placeholder="C:\Users\...">
+        </div>
+        <div class="srow" style="justify-content:flex-end">
+          <button class="sbtn2" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div class="credits">crafted with precision by <span>rick_grimesz</span> &amp; best clanker &mdash; <span>gemini</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        function saveData() {
-            localStorage.setItem('ac_maps', JSON.stringify(db.maps));
-            localStorage.setItem('ac_garage', JSON.stringify(db.garage));
-        }
+<!-- DOCK -->
+<nav id="dock">
+  <div class="di on" id="d-hub" onclick="nav('hub')"><div class="di-tip">Hub</div><div class="di-icon">H</div></div>
+  <div class="di" id="d-garage" onclick="nav('garage')"><div class="di-tip">Garage</div><div class="di-icon">G</div></div>
+  <div class="di" id="d-maps" onclick="nav('maps')"><div class="di-tip">Maps</div><div class="di-icon">M</div></div>
+  <div class="di" id="d-account" onclick="nav('account')"><div class="di-tip">Profile</div><div class="di-icon">P</div></div>
+</nav>
+</div>
 
-        function switchView(viewId) {
-            triggerHaptic();
-            document.getElementById('view-map-select').classList.add('hidden');
-            document.getElementById('view-rating').classList.add('hidden');
-            document.getElementById('view-garage').classList.add('hidden');
-            document.getElementById('view-stats').classList.add('hidden');
-            
-            const target = document.getElementById(`view-${viewId}`);
-            target.classList.remove('hidden');
-            target.classList.remove('view-enter');
-            void target.offsetWidth; 
-            target.classList.add('view-enter');
-
-            if(viewId === 'garage') renderGarage();
-            if(viewId === 'stats') renderStats();
-        }
-
-        function addMap() {
-            triggerHaptic();
-            const input = document.getElementById('new-map-input');
-            const trafficInput = document.getElementById('new-map-traffic');
-            const name = input.value.trim();
-            const traffic = parseInt(trafficInput.value) || 1000;
-            if(!name) return;
-            
-            const id = Date.now().toString();
-            db.maps[id] = { name: name, baseTraffic: traffic, runs: [] };
-            saveData();
-            input.value = '';
-            trafficInput.value = '';
-            renderMapList();
-            
-            const list = document.getElementById('map-list');
-            if(list.lastChild) list.lastChild.classList.add('animate-pop');
-        }
-
-        function renderMapList() {
-            const container = document.getElementById('map-list');
-            container.innerHTML = '';
-            
-            if(Object.keys(db.maps).length === 0) {
-                container.innerHTML = `<div class="text-white/30 text-center py-10 text-sm font-bold border border-white/5 rounded-2xl bg-white/5">No maps yet. Create one above.</div>`;
-                return;
-            }
-
-            for(const [id, map] of Object.entries(db.maps)) {
-                const avg = getMapAverageFormatted(id);
-                const runs = map.runs.length;
-                const traffic = map.baseTraffic || 1000;
-                
-                const div = document.createElement('div');
-                div.className = 'spring-bounce glass-panel p-5 flex justify-between items-center cursor-pointer hover:border-white/20 transition select-none';
-                
-                div.onmousedown = () => startPress(id);
-                div.onmouseup = () => cancelPress(id);
-                div.onmouseleave = () => cancelPress(null);
-                div.ontouchstart = () => startPress(id);
-                div.ontouchend = () => cancelPress(id);
-                
-                div.innerHTML = `
-                    <div>
-                        <div class="font-bold text-lg text-white/90">${map.name}</div>
-                        <div class="text-[11px] text-white/40 font-bold mt-1 uppercase tracking-widest"><i class="fa-solid fa-flag-checkered mr-1"></i> ${runs} Runs &nbsp;|&nbsp; <i class="fa-solid fa-car-side mr-1"></i> ${traffic} Cars</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-white/20"></i>
-                `;
-                container.appendChild(div);
-            }
-        }
-
-        function getMapAverageFormatted(id) {
-            const map = db.maps[id];
-            if(map.runs.length < 3) return "---";
-            const avgMs = map.runs.reduce((a,b) => a+b, 0) / map.runs.length;
-            return formatTime(avgMs);
-        }
-
-        function startPress(id) {
-            isLongPress = false;
-            pressTimer = window.setTimeout(() => {
-                isLongPress = true;
-                triggerHaptic();
-                openMapOptions(id);
-            }, 600);
-        }
-
-        function cancelPress(id) {
-            clearTimeout(pressTimer);
-            if(id && !isLongPress) {
-                loadMapRating(id);
-            }
-        }
-
-        let actionMapId = null;
-        function openMapOptions(id) {
-            actionMapId = id;
-            document.getElementById('map-action-name').innerText = db.maps[id].name;
-            document.getElementById('map-action-sheet').classList.add('open');
-        }
-        function closeMapOptions() { document.getElementById('map-action-sheet').classList.remove('open'); }
-        
-        function deleteMap() {
-            if(confirm("delete this map and ALL saved times on it?")) {
-                delete db.maps[actionMapId];
-                saveData();
-                renderMapList();
-                closeMapOptions();
-            }
-        }
-
-        function renameMap() {
-            const newName = prompt("Enter new map name:", db.maps[actionMapId].name);
-            if(newName && newName.trim() !== "") {
-                db.maps[actionMapId].name = newName.trim();
-                saveData();
-                renderMapList();
-                closeMapOptions();
-            }
-        }
-
-        function loadMapRating(id) {
-            activeMapId = id;
-            const map = db.maps[id];
-            document.getElementById('current-map-label').innerText = map.name;
-            
-            const baseTraffic = map.baseTraffic || 1000;
-            const roll = Math.random();
-            let mult = 1;
-            let surgeText = "NORMAL";
-            let surgeColor = "text-gray-400";
-            let boxBorder = "border-white/5";
-
-            if (map.runs.length < 3) {
-                mult = 1;
-                surgeText = "CALIBRATING";
-                surgeColor = "text-amber-500";
-            } else if (roll > 0.95) { mult = 3.0; surgeText = "+200% INSANE SURGE"; surgeColor = "text-purple-400"; boxBorder = "border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]"; }
-            else if (roll > 0.80) { mult = 2.0; surgeText = "+100% RUSH HOUR"; surgeColor = "text-[#e60000]"; boxBorder = "border-[#e60000]/50 shadow-[0_0_15px_rgba(230,0,0,0.2)]"; }
-            else if (roll > 0.60) { mult = 1.5; surgeText = "+50% HEAVY"; surgeColor = "text-amber-500"; boxBorder = "border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]"; }
-            else if (roll > 0.40) { mult = 1.2; surgeText = "+20% DENSER"; surgeColor = "text-emerald-500"; boxBorder = "border-emerald-500/50"; }
-            
-            runState = { brand: "", model: "", crashes: 0, soundBugged: false, isSlippery: false, timeMs: 0, surgeMult: mult };
-            
-            const trafficBox = document.getElementById('traffic-surge-box');
-            trafficBox.className = `glass-panel p-3 flex justify-between items-center transition-colors border ${boxBorder}`;
-            document.getElementById('traffic-target-display').innerHTML = `${Math.floor(baseTraffic * mult)} Cars <span class="${surgeColor} text-[10px] ml-1 font-bold tracking-widest">(${surgeText})</span>`;
-
-            document.getElementById('selected-brand-text').innerText = "Select Car Brand...";
-            document.getElementById('car-model-input').value = "";
-            document.getElementById('crash-display').innerText = "0";
-            
-            document.querySelectorAll('.toggle-box').forEach(el => el.setAttribute('data-active', 'false'));
-
-            document.getElementById('looks-slider').value = 3;
-            updateSlider(document.getElementById('looks-slider'), 'looks-val');
-            document.getElementById('sound-slider').value = 3;
-            updateSlider(document.getElementById('sound-slider'), 'sound-val');
-
-            clearInterval(timerInterval);
-            isRunning = false;
-            document.getElementById('timer-display').innerText = "00:00.00";
-            document.getElementById('timer-display').classList.remove('text-[#e60000]', 'timer-active');
-            document.getElementById('timer-btn').innerText = "START RUN";
-            document.getElementById('timer-btn').className = "spring-bounce w-full btn-red py-3 rounded-xl font-bold uppercase tracking-widest text-sm shadow-xl";
-
-            const warning = document.getElementById('calibration-warning');
-            const overlay = document.getElementById('calibration-blur-overlay');
-            const btn = document.getElementById('get-rating-btn');
-            
-            if(db.maps[id].runs.length < 3) {
-                warning.classList.remove('hidden');
-                overlay.classList.add('active');
-                btn.className = "spring-bounce btn-amber w-full py-4 rounded-xl font-black text-lg uppercase tracking-widest mt-2 shadow-2xl flex justify-center items-center gap-2";
-                btn.innerHTML = '<i class="fa-solid fa-stopwatch"></i> Save Calibration';
-            } else {
-                warning.classList.add('hidden');
-                overlay.classList.remove('active');
-                btn.className = "spring-bounce btn-red w-full py-4 rounded-xl font-black text-lg uppercase tracking-widest mt-2 shadow-2xl flex justify-center items-center gap-2";
-                btn.innerHTML = '<i class="fa-solid fa-calculator"></i> Get Rating';
-            }
-
-            switchView('rating');
-        }
-
-        function populateBrands() {
-            const container = document.getElementById('brand-list-container');
-            BRANDS.forEach(brand => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left px-5 py-3 rounded-xl text-white/70 font-bold hover:bg-white/10 hover:text-white transition active:bg-[#e60000] active:text-white active:scale-[0.98]';
-                btn.innerText = brand;
-                btn.onclick = () => {
-                    triggerHaptic();
-                    runState.brand = brand;
-                    document.getElementById('selected-brand-text').innerText = brand;
-                    document.getElementById('selected-brand-text').classList.replace('text-white/70', 'text-white');
-                    closeBrandDropdown();
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function openBrandDropdown() { triggerHaptic(); document.getElementById('brand-sheet').classList.add('open'); }
-        function closeBrandDropdown() { document.getElementById('brand-sheet').classList.remove('open'); }
-
-        function addCrash() {
-            triggerHaptic();
-            runState.crashes++;
-            document.getElementById('crash-display').innerText = runState.crashes;
-        }
-
-        function toggleState(element, stateKey) {
-            triggerHaptic();
-            runState[stateKey] = !runState[stateKey];
-            element.setAttribute('data-active', runState[stateKey]);
-        }
-
-        function updateSlider(el, textId) {
-            document.getElementById(textId).innerText = Math.round(el.value);
-            const percentage = ((el.value - el.min) / (el.max - el.min)) * 100;
-            el.style.background = `linear-gradient(to right, #e60000 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%)`;
-        }
-
-        function snapSliderAnimated(el, textId) {
-            triggerHaptic();
-            const target = Math.round(parseFloat(el.value));
-            const start = parseFloat(el.value);
-            if (target === start) return;
-
-            const duration = 200; 
-            const startTime = performance.now();
-
-            function animate(time) {
-                const elapsed = time - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                const ease = 1 - Math.pow(1 - progress, 3);
-                el.value = start + (target - start) * ease;
-                
-                const percentage = ((el.value - el.min) / (el.max - el.min)) * 100;
-                el.style.background = `linear-gradient(to right, #e60000 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%)`;
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    el.value = target; 
-                    updateSlider(el, textId); 
-                }
-            }
-            requestAnimationFrame(animate);
-        }
-
-        function toggleTimer() {
-            triggerHaptic();
-            const btn = document.getElementById('timer-btn');
-            const display = document.getElementById('timer-display');
-            
-            if(!isRunning) {
-                startTime = Date.now() - runState.timeMs;
-                timerInterval = setInterval(updateTimerDisplay, 10);
-                isRunning = true;
-                btn.innerText = "STOP RUN";
-                btn.className = "spring-bounce w-full bg-transparent border-2 border-[#e60000] text-[#e60000] py-3 rounded-xl font-bold uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(230,0,0,0.2)]";
-                display.classList.add('text-[#e60000]', 'timer-active');
-            } else {
-                clearInterval(timerInterval);
-                isRunning = false;
-                btn.innerText = "START RUN";
-                btn.className = "spring-bounce w-full btn-red py-3 rounded-xl font-bold uppercase tracking-widest text-sm shadow-xl";
-                display.classList.remove('text-[#e60000]', 'timer-active');
-            }
-        }
-
-        function updateTimerDisplay() {
-            runState.timeMs = Date.now() - startTime;
-            document.getElementById('timer-display').innerText = formatTime(runState.timeMs);
-        }
-
-        function formatTime(ms) {
-            let date = new Date(ms);
-            let m = date.getMinutes().toString().padStart(2, '0');
-            let s = date.getSeconds().toString().padStart(2, '0');
-            let mil = Math.floor(date.getMilliseconds() / 10).toString().padStart(2, '0');
-            return `${m}:${s}.${mil}`;
-        }
-
-        // Animated numbers for stats
-        function animateNumber(elementId, endValue, duration) {
-            const obj = document.getElementById(elementId);
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * endValue);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    obj.innerHTML = endValue;
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        function renderStats() {
-            const totalCars = db.garage.length;
-            const totalCrashes = db.garage.reduce((sum, car) => sum + car.crashes, 0);
-            
-            animateNumber('stat-cars', totalCars, 800);
-            animateNumber('stat-crashes', totalCrashes, 1000);
-
-            const lbContainer = document.getElementById('leaderboard-list');
-            lbContainer.innerHTML = '';
-            
-            // Sort by fastest time, grab top 5
-            const sortedRuns = [...db.garage].sort((a, b) => a.timeMs - b.timeMs).slice(0, 5);
-
-            if(sortedRuns.length === 0) {
-                lbContainer.innerHTML = `<div class="text-white/30 text-center py-6 text-xs font-bold border border-white/5 rounded-2xl bg-white/5">No runs saved yet.</div>`;
-                return;
-            }
-
-            sortedRuns.forEach((car, index) => {
-                const div = document.createElement('div');
-                div.className = 'glass-panel p-4 flex items-center gap-4 relative overflow-hidden border border-white/5';
-                
-                let medalColor = "text-gray-600";
-                if(index === 0) medalColor = "text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]";
-                if(index === 1) medalColor = "text-gray-300 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]";
-                if(index === 2) medalColor = "text-amber-600 drop-shadow-[0_0_5px_rgba(217,119,6,0.5)]";
-
-                div.innerHTML = `
-                    <div class="font-black text-2xl ${medalColor} w-6 text-center">#${index + 1}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="font-bold text-white truncate">${car.brand} <span class="text-white/50">${car.model}</span></div>
-                        <div class="text-[10px] text-white/40 uppercase tracking-widest mt-0.5 truncate">${car.mapName}</div>
-                    </div>
-                    <div class="font-mono font-black text-lg text-emerald-400 tracking-tighter">${formatTime(car.timeMs)}</div>
-                `;
-                lbContainer.appendChild(div);
-            });
-        }
-
-        let currentFinalResult = null;
-
-        function calculateRating() {
-            triggerHaptic();
-            if(!runState.brand) {
-                const brandBtn = document.getElementById('brand-selector-btn');
-                brandBtn.style.border = "1px solid #e60000";
-                brandBtn.style.background = "rgba(230,0,0,0.2)";
-                setTimeout(() => {
-                    brandBtn.style.border = "";
-                    brandBtn.style.background = "";
-                }, 1500);
-                return;
-            }
-            if(isRunning) toggleTimer(); 
-
-            const map = db.maps[activeMapId];
-            const isCalibrating = map.runs.length < 3;
-            
-            let score = 0;
-            let avgLabel = "N/A (Calibrating)";
-
-            if(isCalibrating) {
-                score = 0; 
-            } else {
-                runState.model = document.getElementById('car-model-input').value.trim();
-                const looks = Math.round(parseFloat(document.getElementById('looks-slider').value));
-                const sound = Math.round(parseFloat(document.getElementById('sound-slider').value));
-                
-                // RATING IS STRICTLY ABOUT THE CAR NOW
-                score = (looks + sound) / 2;
-                if(runState.soundBugged) score -= 0.5;
-                if(runState.isSlippery) score -= 0.5;
-
-                // Snap perfectly to 0.5 increments (e.g. 3.25 -> 3.5, 3.1 -> 3.0)
-                score = Math.max(0.5, Math.min(5.0, score));
-                score = Math.round(score * 2) / 2;
-
-                const avgMs = map.runs.reduce((a,b) => a+b, 0) / map.runs.length;
-                avgLabel = formatTime(avgMs);
-            }
-
-            currentFinalResult = {
-                brand: runState.brand,
-                model: runState.model,
-                mapName: map.name,
-                mapId: activeMapId,
-                timeMs: runState.timeMs,
-                crashes: runState.crashes,
-                score: score,
-                isCalib: isCalibrating,
-                date: new Date().getTime()
-            };
-
-            showResultScreen(avgLabel);
-        }
-
-        function showResultScreen(avgLabel) {
-            const displayTitle = currentFinalResult.model ? `${currentFinalResult.brand} ${currentFinalResult.model}` : currentFinalResult.brand;
-            document.getElementById('res-brand').innerText = currentFinalResult.isCalib ? `${displayTitle} (CALIB)` : displayTitle;
-            document.getElementById('res-score').innerText = currentFinalResult.isCalib ? "-" : currentFinalResult.score.toFixed(1);
-            document.getElementById('res-time').innerText = formatTime(currentFinalResult.timeMs);
-            document.getElementById('res-crashes').innerText = currentFinalResult.crashes;
-            document.getElementById('res-avg').innerText = avgLabel;
-
-            const starContainer = document.getElementById('res-stars');
-            const saveBtn = document.getElementById('res-save-btn');
-            
-            starContainer.innerHTML = '';
-            
-            if(!currentFinalResult.isCalib) {
-                for(let i=1; i<=5; i++) {
-                    if(currentFinalResult.score >= i) starContainer.innerHTML += '<i class="fa-solid fa-star"></i>';
-                    else if (currentFinalResult.score + 0.5 === i) starContainer.innerHTML += '<i class="fa-solid fa-star-half-stroke"></i>';
-                    else starContainer.innerHTML += '<i class="fa-regular fa-star opacity-20"></i>';
-                }
-                saveBtn.innerText = "Save to Garage";
-            } else {
-                starContainer.innerHTML = '<i class="fa-solid fa-bolt text-white/20"></i>';
-                const currentRuns = db.maps[activeMapId].runs.length;
-                saveBtn.innerText = `Save Calibration (${currentRuns + 1}/3)`;
-            }
-
-            document.getElementById('result-overlay').classList.remove('hidden');
-        }
-
-        function saveAndCloseResult() {
-            triggerHaptic();
-            if(currentFinalResult.timeMs > 0) db.maps[activeMapId].runs.push(currentFinalResult.timeMs);
-            if(!currentFinalResult.isCalib) db.garage.unshift(currentFinalResult); 
-            
-            saveData();
-            document.getElementById('result-overlay').classList.add('hidden');
-            switchView('map-select'); 
-        }
-
-        function renderGarage() {
-            const container = document.getElementById('garage-list');
-            container.innerHTML = '';
-
-            let totalStars = db.garage.reduce((sum, car) => sum + car.score, 0);
-            let rank = "Rookie";
-            let icon = "fa-car-side text-gray-400";
-            
-            if(totalStars >= 100) { rank = "No Hesi God"; icon = "fa-crown text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]"; }
-            else if(totalStars >= 50) { rank = "Certified Demon"; icon = "fa-fire text-[#e60000] drop-shadow-[0_0_10px_rgba(230,0,0,0.8)]"; }
-            else if(totalStars >= 25) { rank = "Traffic Weaver"; icon = "fa-bolt text-purple-400"; }
-            else if(totalStars >= 10) { rank = "Street Racer"; icon = "fa-flag-checkered text-white"; }
-
-            document.getElementById('rank-title').innerText = rank;
-            document.getElementById('rank-icon').className = `fa-solid ${icon} text-4xl`;
-            document.getElementById('rank-stats').innerText = `${totalStars.toFixed(1)} TOTAL STARS | ${db.garage.length} CARS RATED`;
-
-            if(db.garage.length === 0) {
-                container.innerHTML = `<div class="text-white/30 text-center py-10 text-sm font-bold border border-white/5 rounded-2xl bg-white/5">Garage is empty.</div>`;
-                return;
-            }
-
-            db.garage.forEach((car, index) => {
-                let starsHTML = '';
-                for(let i=1; i<=5; i++) {
-                    if(car.score >= i) starsHTML += '<i class="fa-solid fa-star text-amber-400 text-xs"></i>';
-                    else if (car.score + 0.5 === i) starsHTML += '<i class="fa-solid fa-star-half-stroke text-amber-400 text-xs"></i>';
-                    else starsHTML += '<i class="fa-regular fa-star text-white/20 text-xs"></i>';
-                }
-
-                const div = document.createElement('div');
-                div.className = 'glass-panel p-5 flex flex-col gap-3 relative overflow-hidden group';
-                
-                const displayTitle = car.model ? `${car.brand} <span class="text-white/60">${car.model}</span>` : car.brand;
-
-                div.innerHTML = `
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-[#e60000]/10 rounded-bl-full -z-10 blur-xl"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="font-black text-xl text-white/90 tracking-tight leading-tight">${displayTitle}</div>
-                            <div class="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1.5"><i class="fa-solid fa-location-dot mr-1"></i> ${car.mapName}</div>
-                        </div>
-                        <div class="flex gap-0.5 mt-1">${starsHTML}</div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2 pt-3 border-t border-white/5">
-                        <div class="text-xs font-bold text-white/60 font-mono"><i class="fa-solid fa-stopwatch mr-1 text-white/30"></i> ${formatTime(car.timeMs)}</div>
-                        <div class="text-xs font-bold ${car.crashes > 0 ? 'text-[#e60000] bg-[#e60000]/10 px-2 py-0.5 rounded' : 'text-emerald-500'}"><i class="fa-solid fa-car-burst mr-1"></i> ${car.crashes}</div>
-                    </div>
-                    <button onclick="deleteFromGarage(${index})" class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition text-white/30 hover:text-red-500 p-2"><i class="fa-solid fa-trash text-sm"></i></button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function deleteFromGarage(index) {
-            triggerHaptic();
-            if(confirm("Delete this car from garage?")) {
-                db.garage.splice(index, 1);
-                saveData();
-                renderGarage();
-            }
-        }
-    </script>
+<script>
+const API='http://127.0.0.1:5827';
+const S={page:'hub',prevGarage:'garage',cars:[],maps:[],cfg:{},filter:'all',view:'grid',scrollG:0,scrollM:0,car:null,map:null,comp:localStorage.getItem('comp')==='1',xp:+localStorage.getItem('xp')||150,sess:+localStorage.getItem('sess')||0,chartInst:null,silkRaf:null,bgRaf:null};
+const RANKS=[
+  {n:'Street Novice',x:0,i:'[1]',c:'#6b7280'},
+  {n:'Grip Seeker',x:100,i:'[2]',c:'#3b82f6'},
+  {n:'Tarmac Rookie',x:300,i:'[3]',c:'#22c55e'},
+  {n:'Canyon Ghost',x:700,i:'[4]',c:'#a855f7'},
+  {n:'Drift Surgeon',x:1500,i:'[5]',c:'#06b6d4'},
+  {n:'Asphalt Phantom',x:3000,i:'[6]',c:'#f59e0b'},
+  {n:'Highway Predator',x:6000,i:'[7]',c:'#ef4444'},
+  {n:'Track Demon',x:10000,i:'[8]',c:'#e879f9'},
+  {n:'Apex Sovereign',x:15000,i:'[9]',c:'#fbbf24'},
+  {n:'No Hesi Legend',x:25000,i:'[10]',c:'#f97316'},
+];
+function getRankIdx(xp){let i=0;RANKS.forEach((r,j)=>{if(xp>=r.x)i=j;});return i;}
+function getRank(xp){return RANKS[getRankIdx(xp)];}
+const ROT=['Select your weapon.','No Hesi. No Limits.','Ready to race?','Welcome back, Driver.','Push the limit.'];
+let rotI=0;
+function initRot(){
+  const el=document.getElementById('hub-rot');
+  if(!el)return;
+  setInterval(()=>{
+    rotI=(rotI+1)%ROT.length;
+    el.style.opacity='0';el.style.transform='translateY(-12px)';
+    setTimeout(()=>{
+      el.textContent=ROT[rotI];
+      el.style.transition='none';el.style.transform='translateY(12px)';el.style.opacity='0';
+      setTimeout(()=>{el.style.transition='opacity .38s ease,transform .38s ease';el.style.transform='translateY(0)';el.style.opacity='1';},20);
+    },360);
+  },2900);
+}
+function countUp(el,to,dur=1100){
+  const s=performance.now();
+  const r=(now)=>{const p=Math.min((now-s)/dur,1);const e=1-Math.pow(1-p,4);el.textContent=Math.round(e*to).toLocaleString();if(p<1)requestAnimationFrame(r);};
+  requestAnimationFrame(r);
+}
+let bgCv,bgCx,bgRId,bgT=0;
+function initBg(){bgCv=document.getElementById('bg-canvas');bgCx=bgCv.getContext('2d');resizeBg();window.addEventListener('resize',resizeBg);}
+function resizeBg(){if(!bgCv)return;bgCv.width=innerWidth;bgCv.height=innerHeight;}
+function animHub(){
+  if(!bgCx)return;
+  bgCx.clearRect(0,0,bgCv.width,bgCv.height);
+  const W=bgCv.width,H=bgCv.height;bgT+=.007;
+  for(let i=0;i<7;i++){
+    const amp=28+i*14,freq=.0028+i*.0007,yb=H*(.25+i*.1),a=Math.max(.038-i*.004,.006);
+    bgCx.beginPath();bgCx.strokeStyle=`rgba(124,58,237,${a})`;bgCx.lineWidth=1.4;
+    bgCx.moveTo(0,yb);
+    for(let x=0;x<W;x+=2){const y=yb+Math.sin(x*freq+bgT+i*.65)*amp+Math.sin(x*freq*2.2-bgT*.7)*(amp*.38);bgCx.lineTo(x,y);}
+    bgCx.stroke();
+  }
+  bgRId=requestAnimationFrame(animHub);
+}
+let pilT=0;
+function animMaps(){
+  if(!bgCx)return;
+  bgCx.clearRect(0,0,bgCv.width,bgCv.height);
+  const W=bgCv.width,H=bgCv.height;pilT+=.004;
+  for(let i=0;i<4;i++){
+    const x=W*(0.2+i*0.2)+Math.sin(pilT+i*1.3)*55;
+    const a=.055+Math.sin(pilT*.8+i)*.02;
+    const g=bgCx.createLinearGradient(x,H,x,0);
+    g.addColorStop(0,`rgba(6,182,212,${a})`);g.addColorStop(.45,`rgba(124,58,237,${a*.5})`);g.addColorStop(1,'rgba(6,182,212,0)');
+    bgCx.beginPath();bgCx.fillStyle=g;
+    bgCx.ellipse(x,H,70+Math.sin(pilT+i)*20,H*.85,0,0,Math.PI*2);bgCx.fill();
+  }
+  bgRId=requestAnimationFrame(animMaps);
+}
+function stopBg(){if(bgRId){cancelAnimationFrame(bgRId);bgRId=null;}}
+function startBg(p){stopBg();if(['maps','map-detail'].includes(p))animMaps();else animHub();}
+let sC,sX,sTimeVal=0;
+function initSilk(){
+  sC=document.getElementById('silk-canvas');if(!sC)return;
+  sC.width=sC.offsetWidth||innerWidth;sC.height=sC.offsetHeight||(innerHeight*.58);
+  sX=sC.getContext('2d');sTimeVal=0;animSilk();
+}
+function animSilk(){
+  if(!sX)return;sTimeVal+=.007;
+  const W=sC.width,H=sC.height;
+  sX.clearRect(0,0,W,H);sX.fillStyle='#060609';sX.fillRect(0,0,W,H);
+  const blobs=[
+    {bx:.3+Math.sin(sTimeVal*.7)*.22,by:.4+Math.cos(sTimeVal*.5)*.25,r:.38,col:'124,58,237',a:.14},
+    {bx:.7+Math.cos(sTimeVal*.4)*.16,by:.3+Math.sin(sTimeVal*.8)*.2,r:.3,col:'6,182,212',a:.09},
+    {bx:.5+Math.sin(sTimeVal*.3+1)*.28,by:.72+Math.cos(sTimeVal*.6)*.14,r:.26,col:'249,115,22',a:.06},
+  ];
+  blobs.forEach(b=>{
+    const g=sX.createRadialGradient(b.bx*W,b.by*H,0,b.bx*W,b.by*H,b.r*W);
+    g.addColorStop(0,`rgba(${b.col},${b.a})`);g.addColorStop(1,'rgba(0,0,0,0)');
+    sX.fillStyle=g;sX.fillRect(0,0,W,H);
+  });
+  S.silkRaf=requestAnimationFrame(animSilk);
+}
+function stopSilk(){if(S.silkRaf){cancelAnimationFrame(S.silkRaf);S.silkRaf=null;}}
+const PAGES={hub:'page-hub',garage:'page-garage','car-detail':'page-car-detail',maps:'page-maps','map-detail':'page-map-detail',account:'page-account'};
+const DOCK_M={hub:'d-hub',garage:'d-garage','car-detail':'d-garage',maps:'d-maps','map-detail':'d-maps',account:'d-account'};
+function nav(p){
+  if(S.page==='garage'){const el=document.getElementById('page-garage');if(el)S.scrollG=el.scrollTop;}
+  if(S.page==='maps'){const el=document.getElementById('page-maps');if(el)S.scrollM=el.scrollTop;}
+  const prev=document.getElementById(PAGES[S.page]);
+  const next=document.getElementById(PAGES[p]);
+  if(!next)return;
+  if(prev&&prev!==next)prev.classList.remove('active');
+  S.page=p;
+  requestAnimationFrame(()=>{
+    next.classList.add('active');
+    if(p==='garage')setTimeout(()=>{next.scrollTop=S.scrollG;},55);
+    if(p==='maps')setTimeout(()=>{next.scrollTop=S.scrollM;},55);
+  });
+  document.querySelectorAll('.di').forEach(d=>d.classList.remove('on'));
+  const dk=document.getElementById(DOCK_M[p]);if(dk)dk.classList.add('on');
+  startBg(p);
+  if(p!=='car-detail')stopSilk();
+  if(p==='account')setTimeout(()=>{mountAccount();initTilt();},60);
+  if(p==='hub')updateHub();
+  if(p==='garage')setTimeout(initFSlug,80);
+}
+function backFromCar(){nav(S.prevGarage||'garage');}
+function backFromMap(){nav('maps');}
+function toggleComp(){
+  S.comp=!S.comp;
+  localStorage.setItem('comp',S.comp?'1':'0');
+  document.getElementById('comp-toggle').classList.toggle('on',S.comp);
+  showNotif(S.comp?'Competitive ON':'Competitive OFF');
+  if(S.page==='garage')renderGarage();
+}
+function initComp(){document.getElementById('comp-toggle').classList.toggle('on',S.comp);}
+let nT=null;
+function showNotif(msg,ic='ok'){
+  document.getElementById('nt').textContent=msg;
+  document.getElementById('ni').textContent=ic;
+  const n=document.getElementById('notif');n.classList.add('show');
+  if(nT)clearTimeout(nT);
+  nT=setTimeout(()=>n.classList.remove('show'),2800);
+}
+async function loadData(){
+  try{
+    const [cr,mr,cfr]=await Promise.all([fetch(`${API}/api/cars`),fetch(`${API}/api/tracks`),fetch(`${API}/api/config`)]);
+    S.cars=await cr.json();S.maps=await mr.json();S.cfg=await cfr.json();
+    document.getElementById('s-ac').value=S.cfg.ac_path||'';
+    document.getElementById('s-sc').value=S.cfg.screens_path||'';
+    updateHub();
+    if(S.page==='garage')renderGarage();
+    if(S.page==='maps')renderMaps();
+  }catch(e){console.error(e);showNotif('Server offline - run server.py','!');}
+}
+function updateHub(){
+  const tc=S.cars.length,tm=S.maps.length,tt=S.cars.filter(c=>c.id&&c.id.startsWith('nohesituned_')).length;
+  countUp(document.getElementById('hs-cars'),tc);
+  countUp(document.getElementById('hs-maps'),tm);
+  countUp(document.getElementById('hs-tuned'),tt);
+}
+function setF(f){
+  S.filter=f;S.scrollG=0;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('on',t.dataset.f===f));
+  initFSlug();renderGarage();
+}
+function setV(v){
+  S.view=v;
+  document.getElementById('vg').classList.toggle('on',v==='grid');
+  document.getElementById('vl').classList.toggle('on',v==='list');
+  document.getElementById('cgrid').classList.toggle('lv',v==='list');
+}
+function initFSlug(){
+  const active=document.querySelector('.ftab.on');
+  const slug=document.getElementById('fslug');
+  const tabs=document.getElementById('ftabs');
+  if(active&&slug&&tabs){
+    const tr=active.getBoundingClientRect(),tr2=tabs.getBoundingClientRect();
+    slug.style.left=(tr.left-tr2.left)+'px';
+    slug.style.width=tr.width+'px';
+  }
+}
+function getCalib(id){return JSON.parse(localStorage.getItem('calib')||'{}')[id]||false;}
+function filteredCars(){
+  return S.cars.filter(car=>{
+    const locked=S.comp&&!getCalib(car.id);
+    const tuned=car.id&&car.id.startsWith('nohesituned_');
+    if(S.filter==='tuned')return tuned;
+    if(S.filter==='stock')return !tuned;
+    if(S.filter==='locked')return locked;
+    return true;
+  });
+}
+function renderGarage(){
+  const grid=document.getElementById('cgrid');
+  const cars=filteredCars();
+  document.getElementById('gcount').textContent=cars.length;
+  if(!cars.length){grid.innerHTML='<div class="empty"><div class="empty-ic">?</div><div class="empty-tx">No cars found</div></div>';return;}
+  grid.innerHTML=cars.map(car=>{
+    const locked=S.comp&&!getCalib(car.id);
+    const tuned=car.id&&car.id.startsWith('nohesituned_');
+    const hp=spec(car.specs&&car.specs.bhp),ts=spec(car.specs&&car.specs.topspeed);
+    return '<div class="cc'+(locked?' locked':'')+'" onclick="openCar(\''+esc(car.id)+'\')">'+'<div class="cpw">'+(car.hasPreview?'<img class="cpimg" src="'+API+'/api/cars/'+esc(car.id)+'/preview" loading="lazy" alt="'+esc(car.name)+'" onerror="this.parentElement.innerHTML=\'<div class=cpph>X</div>\'">':'<div class="cpph">X</div>')+(locked?'<div class="clock">LOCKED</div>':'')+'</div>'+'<div class="ci">'+'<div class="cn" title="'+esc(car.name)+'">'+esc(car.name)+'</div>'+'<div class="cbr">'+esc(car.brand||'')+(tuned?' TUNED':'')+'</div>'+((hp||ts)?'<div class="csrow">'+(hp?'<div class="cs"><div class="csv">'+hp+'</div><div class="csk">BHP</div></div>':'')+(ts?'<div class="cs"><div class="csv">'+ts+'</div><div class="csk">km/h</div></div>':'')+(car.year?'<div class="cs"><div class="csv">'+car.year+'</div><div class="csk">Year</div></div>':'')+'</div>':'')+'</div></div>';
+  }).join('');
+  grid.classList.toggle('lv',S.view==='list');
+}
+function spec(v){if(!v)return null;const n=parseInt(String(v).replace(/[^\d]/g,''));return isNaN(n)?null:n;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function openCar(id){
+  const car=S.cars.find(c=>c.id===id);if(!car)return;
+  S.car=car;S.prevGarage=S.page;
+  document.getElementById('dcn').textContent=car.name;
+  document.getElementById('dcbr').textContent=[car.brand,car.country,car.year].filter(Boolean).join(' - ');
+  document.getElementById('dcdesc').textContent=car.description||'';
+  const img=document.getElementById('dcimg');
+  img.src=car.hasPreview?`${API}/api/cars/${esc(car.id)}/preview`:'';img.style.display=car.hasPreview?'':'none';
+  const specs=[];
+  if(car.specs&&car.specs.bhp)specs.push({k:'Power',v:car.specs.bhp});
+  if(car.specs&&car.specs.torque)specs.push({k:'Torque',v:car.specs.torque});
+  if(car.specs&&car.specs.weight)specs.push({k:'Weight',v:car.specs.weight});
+  if(car.specs&&car.specs.topspeed)specs.push({k:'Top Speed',v:car.specs.topspeed});
+  if(car.specs&&car.specs.acceleration)specs.push({k:'0-100',v:car.specs.acceleration});
+  if(car.specs&&car.specs.pwratio)specs.push({k:'P/W',v:car.specs.pwratio});
+  document.getElementById('dsdg').innerHTML=specs.map(s=>'<div class="dspec"><div class="dspecv">'+esc(String(s.v))+'</div><div class="dspeck">'+esc(s.k)+'</div></div>').join('');
+  nav('car-detail');
+  setTimeout(()=>{const sc=document.getElementById('silk-canvas');if(sc){sc.width=sc.offsetWidth;sc.height=sc.offsetHeight;stopSilk();initSilk();}renderChart(car);},120);
+}
+let chartInst=null;
+function renderChart(car){
+  const cv=document.getElementById('pchart');if(!cv)return;
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  const pwC=car.powerCurve||[],tqC=car.torqueCurve||[];
+  const wrap=document.getElementById('dchart-wrap');
+  if(!pwC.length&&!tqC.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const rpms=(pwC.length?pwC:tqC).map(p=>parseInt(p[0]));
+  const labels=rpms.map(r=>((r/1000).toFixed(1))+'k');
+  const ds=[];
+  if(pwC.length)ds.push({label:'BHP',data:pwC.map(p=>parseFloat(p[1])),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.09)',borderWidth:2.5,pointRadius:0,tension:.4,fill:true,yAxisID:'y'});
+  if(tqC.length)ds.push({label:'Torque (Nm)',data:tqC.map(p=>parseFloat(p[1])),borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.04)',borderWidth:2,pointRadius:0,tension:.4,fill:false,yAxisID:'y1'});
+  chartInst=new Chart(cv,{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#8b8fa8',font:{family:'Outfit',size:12}}}},scales:{x:{grid:{color:'rgba(255,255,255,.028)'},ticks:{color:'#4a4d65',font:{family:'Outfit',size:11}}},y:{type:'linear',display:true,position:'left',grid:{color:'rgba(255,255,255,.028)'},ticks:{color:'#7c3aed',font:{family:'Outfit',size:11}},title:{display:true,text:'BHP',color:'#7c3aed',font:{family:'Outfit'}}},y1:{type:'linear',display:ds.length>1,position:'right',grid:{drawOnChartArea:false},ticks:{color:'#06b6d4',font:{family:'Outfit',size:11}},title:{display:true,text:'Nm',color:'#06b6d4',font:{family:'Outfit'}}}}}});
+}
+function renderMaps(){
+  const grid=document.getElementById('mgrid');if(!grid)return;
+  if(!S.maps.length){grid.innerHTML='<div class="empty"><div class="empty-ic">?</div><div class="empty-tx">No maps found</div></div>';return;}
+  grid.innerHTML=S.maps.map(m=>'<div class="mc" onclick="openMap(\''+esc(m.id)+'\')">'+(m.hasPreview?'<img class="mcimg" src="'+API+'/api/tracks/'+esc(m.id)+'/preview" loading="lazy" alt="'+esc(m.name)+'" onerror="this.style.display=\'none\'">':\'<div class="mcph">?</div>\')+'<div class="mcov"><div class="mcn">'+esc(m.name)+'</div><div class="mctags">'+(m.country?'<span class="tag">'+esc(m.country)+'</span>':'')+((m.tags||[]).slice(0,3).map(t=>'<span class="tag">'+esc(t)+'</span>').join(''))+'</div></div></div>').join('');
+}
+function openMap(id){
+  const m=S.maps.find(x=>x.id===id);if(!m)return;
+  S.map=m;
+  document.getElementById('mdn').textContent=m.name;
+  document.getElementById('mddesc').textContent=m.description||'';
+  document.getElementById('mdtags').innerHTML=(m.tags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('');
+  const img=document.getElementById('mdimg');
+  img.src=m.hasPreview?`${API}/api/tracks/${esc(m.id)}/preview`:'';img.style.display=m.hasPreview?'':'none';
+  nav('map-detail');
+}
+async function launchCar(){
+  if(!S.car)return;
+  if(!S.map){showNotif('Select a map first!');return;}
+  try{showNotif('Launching AC...');await fetch(`${API}/api/launch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({car_id:S.car.id,track_id:S.map.id})});}
+  catch(e){showNotif('Launch failed');}
+}
+async function launchMap(){
+  if(!S.map)return;
+  if(!S.car){showNotif('Pick a car first!');return;}
+  launchCar();
+}
+function mountAccount(){
+  const rank=getRank(S.xp),idx=getRankIdx(S.xp);
+  document.getElementById('r-icon').textContent=rank.i;
+  document.getElementById('r-title').textContent=rank.n;
+  document.getElementById('r-title').style.color=rank.c;
+  document.getElementById('r-title').style.textShadow='0 0 20px '+rank.c+',0 0 40px '+rank.c;
+  document.getElementById('r-tier').textContent='Tier '+(idx+1)+' / '+RANKS.length;
+  document.getElementById('r-xp').textContent=S.xp.toLocaleString()+' XP';
+  const nxt=RANKS[idx+1],prev=rank.x,nxtX=nxt?nxt.x:rank.x+1;
+  const pct=nxt?(((S.xp-prev)/(nxtX-prev))*100):100;
+  setTimeout(()=>{document.getElementById('xpfill').style.width=Math.min(pct,100)+'%';},200);
+  document.getElementById('xp-cur').textContent=rank.x.toLocaleString()+' XP';
+  document.getElementById('xp-nxt').textContent=nxt?(nxtX.toLocaleString()+' -> '+nxt.n):'MAX RANK';
+  countUp(document.getElementById('rc-cars'),S.cars.length);
+  countUp(document.getElementById('rc-maps'),S.maps.length);
+  countUp(document.getElementById('rc-sess'),S.sess);
+  countUp(document.getElementById('rc-tuned'),S.cars.filter(c=>c.id&&c.id.startsWith('nohesituned_')).length);
+  document.getElementById('rlist').innerHTML=RANKS.map((r,i)=>{
+    const cur=i===idx,unlocked=S.xp>=r.x;
+    return '<div class="rrow'+(cur?' cur':'')+'" style="opacity:'+(unlocked?1:.3)+'"><div class="rrow-icon">'+r.i+'</div><div class="rrow-info"><div class="rrow-name" style="color:'+(unlocked?r.c:'var(--t3)')+'">'+r.n+'</div><div class="rrow-req">'+r.x.toLocaleString()+' XP</div></div>'+(cur?'<span class="rbadge">CURRENT</span>':'')+'</div>';
+  }).join('');
+}
+function initTilt(){
+  const c=document.getElementById('rcard');if(!c)return;
+  c.onmousemove=e=>{
+    const r=c.getBoundingClientRect(),cx=r.width/2,cy=r.height/2;
+    const rx=-((e.clientY-r.top-cy)/cy)*6,ry=((e.clientX-r.left-cx)/cx)*9;
+    c.style.transform='perspective(800px) rotateX('+rx+'deg) rotateY('+ry+'deg) scale3d(1.02,1.02,1.02)';
+    c.style.boxShadow=(ry*2)+'px '+(-rx*2)+'px 44px rgba(124,58,237,.22),0 0 64px rgba(124,58,237,.1)';
+  };
+  c.onmouseleave=()=>{c.style.transform='';c.style.boxShadow='';};
+}
+async function saveSettings(){
+  const cfg={ac_path:document.getElementById('s-ac').value,screens_path:document.getElementById('s-sc').value};
+  try{
+    await fetch(`${API}/api/config`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+    S.cfg=Object.assign({},S.cfg,cfg);showNotif('Settings saved!');loadData();
+  }catch(e){showNotif('Save failed');}
+}
+function initDock(){
+  const dock=document.getElementById('dock'),items=[...dock.querySelectorAll('.di')];
+  dock.onmousemove=e=>{
+    items.forEach(it=>{
+      const ic=it.querySelector('.di-icon'),r=ic.getBoundingClientRect();
+      const d=Math.abs(e.clientX-(r.left+r.width/2)),max=130;
+      if(d<max){const s=1+(1-d/max)*.38,y=-(1-d/max)*8;ic.style.transform='translateY('+y+'px) scale('+s+')';}
+      else ic.style.transform='';
+    });
+  };
+  dock.onmouseleave=()=>items.forEach(it=>it.querySelector('.di-icon').style.transform='');
+}
+async function boot(){
+  initBg();initRot();initComp();initDock();
+  document.getElementById('page-hub').classList.add('active');
+  startBg('hub');
+  await loadData();
+  renderMaps();
+  document.getElementById('d-garage').addEventListener('click',()=>setTimeout(()=>{renderGarage();initFSlug();},80));
+}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
+</script>
 </body>
 </html>
